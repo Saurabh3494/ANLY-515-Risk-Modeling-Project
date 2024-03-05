@@ -1,0 +1,2024 @@
+---
+title: 'ANLY 515: Risk Modeling Project'
+author: "Saurabh Shirish Prabhu"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+rm(list=ls()) 
+knitr::opts_chunk$set(echo = TRUE)
+dir.create(tempdir())
+```
+
+Importing data from Yahoo finance:
+
+```{r}
+getwd()
+setwd('F:/a_Harrisburg_University_Academics/ANLY 515-51- A-2024Spring - Risk Modeling and Assessment/Final Project/Code')
+getwd()
+```
+
+Select two market sectors from the 11 sectors identified on this
+reference o <https://www.bloomberg.com/markets/sectors>
+
+Answer:
+
+[1]Information Technology<br>
+
+1.1 Semiconductors & Semiconductor Equipment: NVIDIA Corporation (NVDA)<br>
+1.2 Software & Services: Microsoft Corporation (MSFT)<br>
+1.3 Software & Services: Apple Inc. (AAPL)<br>
+1.4 Software & Services: Netflix Inc. (NFLX)<br>
+
+
+[2]Financials<br>
+
+2.1 Insurance: Berkshire Hathaway Inc. (BRK.B)<br>
+2.2 Banks: JPMorgan Chase & Co. (JPM)<br>
+2.3 Banks: CitiGroup Inc. (C)<br>
+2.4 Insurance: BlackRock Inc. (BLK)<br>
+
+
+
+[3]Consumer Discretionary:<br>
+
+3.1 Retailing: McDonald's Corporation (MCD)<br>
+3.2 Consumer Durables & Apparel: Skechers U.S.A., Inc. (SKX)<br>
+3.3 Retailing: Starbucks Corp. (SBUX) <br>
+3.4 Consumer Durables & Apparel: Nike Inc. (NKE)
+
+
+
+[4]Industrials: <br>
+
+4.1 Capital Goods: Cummins Inc. (CMI)<br>
+4.2 Capital Goods:Deere & Company (DE)<br>
+
+
+References: <br>
+[1]<https://stockanalysis.com/stocks/industry/><br>
+[2]<https://medium.com/\@sil.soham/importing-and-visualising-stock-market-data-in-r-ac5a22e23cd><br>
+
+
+Import all necessary libraries
+
+```{r}
+library(quantmod)
+library(xts)
+library(dplyr)
+```
+
+Students should have a five-year portfolio. The calculations for this homework will be based on the data from the third year of your portfolio.
+
+• Identify the five-year period of your portfolio
+
+a) Identify the period for this homework
+
+• Use only 4 stocks from your portfolio
+
+
+
+Part A – Individual Security Returns
+1. Calculate Returns
+
+a) Calculate portfolio price returns for the homework period
+
+
+2. Dividend reinvestment strategy
+
+a) Calculate portfolio total gross returns for the homework period
+
+b) Calculate portfolio logarithmic gross returns for the homework period
+
+c) Are the results the same?
+
+
+3. Plot a comparison of Total Price returns and Total Gross returns
+
+
+
+Part B – Portfolio Returns
+
+Use the same investment period and the same stocks
+
+1. Create an equally-weighted portfolio (rebalance each quarter)
+
+2. Create a value-weighted portfolio (rebalance each quarter)
+
+a. Create weight pie charts for each quarter
+
+3. Plot a comparison between the EW and the VW portfolio
+
+
+
+```{r}
+
+start <- as.Date("2014-12-31",format="%Y-%m-%d")
+end <- as.Date("2023-12-31",format="%Y-%m-%d")
+
+# Use getSymbols to retrieve the data
+
+# [1]Information Technology
+data.NVDA <- getSymbols("NVDA", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.MSFT <- getSymbols("MSFT", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.AAPL <- getSymbols("AAPL", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NFLX <- getSymbols("NFLX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [2]Financials
+data.BRK_B <- getSymbols("BRK-B", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.JPM <- getSymbols("JPM", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.C <- getSymbols("C", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.BLK <- getSymbols("BLK", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [3]Consumer Discretionary:
+data.MCD <- getSymbols("MCD", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SKX <- getSymbols("SKX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SBUX <- getSymbols("SBUX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NKE <- getSymbols("NKE", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+# Assign the class "xts" and "zoo" explicitly
+# class(data.NVDA) <- c("xts", "zoo")
+# Print the class of the assigned variable
+class(data.NVDA)
+
+
+```
+
+Plot the data for each security to check for missing data<br>
+
+• Confirm that there is no missing data<br> 
+• Check the dimensions to
+verify that the data covers 5 years<br>
+
+```{r}
+names(data.BRK_B)
+names(data.BRK_B) <- paste(c("BRK_B.Open","BRK_B.High","BRK_B.Low","BRK_B.Close","BRK_B.Volume","BRK_B.Adjusted"))
+names(data.BRK_B)
+```
+
+```{r}
+
+## Information Technology
+par(mfrow = c(2, 2))  # Set up a 2x2 grid layout
+plot(data.NVDA$NVDA.Adjusted, main="NVDA")
+plot(data.MSFT$MSFT.Adjusted, main="MSFT")
+plot(data.AAPL$AAPL.Adjusted, main="AAPL")
+plot(data.NFLX$NFLX.Adjusted, main="NFLX")
+
+
+## Financials
+par(mfrow = c(2, 2))  # Set up a 2x2 grid layout
+plot(data.BRK_B$BRK_B.Adjusted, main="BRK_B")
+plot(data.JPM$JPM.Adjusted, main="JPM")
+plot(data.C$C.Adjusted, main="C")
+plot(data.BLK$BLK.Adjusted, main="BLK")
+
+
+## Consumer Discretionary
+par(mfrow = c(2, 2))  # Set up a 2x2 grid layout
+plot(data.MCD$MCD.Adjusted, main="MCD")
+plot(data.SKX$SKX.Adjusted, main="SKX")
+plot(data.SBUX$SBUX.Adjusted, main="SBUX")
+plot(data.NKE$NKE.Adjusted, main="NKE")
+
+```
+
+Notes: <br>
+
+-   No missing values<br>
+-   Each stock covers 5 years from 2010/01/01 - 2014/12/31<br>
+
+
+```{r}
+# List of data frames
+stocks_df <- list(data.NVDA, data.MSFT, data.AAPL, data.NFLX, data.BRK_B, data.JPM, data.C, data.BLK, data.MCD, data.SKX, data.SBUX, data.NKE)
+
+# Loop over data frames
+for (df in stocks_df) {
+  print(dim(df))
+  print(summary(df))
+}
+
+```
+
+
+combining each sectors<br>
+
+
+
+<<<<<<<<<<<<<<<<<<<< Total Returns >>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+```{r}
+stocks_df <- list(data.NVDA, data.MSFT, data.AAPL, data.NFLX, data.BRK_B, data.JPM, data.C, data.BLK, data.MCD, data.SKX, data.SBUX, data.NKE)
+Infotech_df   <-list(data.NVDA, data.MSFT, data.AAPL, data.NFLX)
+Financials_df <-list(data.BRK_B, data.JPM, data.C, data.C)
+Consumer_df   <-list(data.MCD, data.SKX, data.SBUX, data.NKE)
+
+### TOTAl RETURNS
+# Combine Data Into individual sectors
+
+```
+
+
+```{r}
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Adjusted.Prices <- data.NVDA$NVDA.Adjusted
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.MSFT$MSFT.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.AAPL$AAPL.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.NFLX$NFLX.Adjusted)
+Infotech.Adjusted.Prices[c(1:3,nrow(Infotech.Adjusted.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Adjusted.Prices <- data.BRK_B$BRK_B.Adjusted
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.JPM$JPM.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.C$C.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.BLK$BLK.Adjusted)
+Financials.Adjusted.Prices[c(1:3,nrow(Financials.Adjusted.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Adjusted.Prices <- data.MCD$MCD.Adjusted
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SKX$SKX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SBUX$SBUX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.NKE$NKE.Adjusted)
+Consumer.Adjusted.Prices[c(1:3,nrow(Consumer.Adjusted.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.totret.all <- cbind(Infotech.Adjusted.Prices,Financials.Adjusted.Prices,Consumer.Adjusted.Prices)
+Portfolio.totret.all[c(1:3,nrow(Portfolio.totret.all)),]
+
+
+```
+
+
+
+
+<<<<<<<<<<<<<<<<<<<<<<PRICE RETURNS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+```{r}
+
+### PRICE RETURNS
+# Combine Data Into individual sectors
+
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Close.Prices <- data.NVDA$NVDA.Close
+Infotech.Close.Prices <-cbind(Infotech.Close.Prices,data.MSFT$MSFT.Close)
+Infotech.Close.Prices <-cbind(Infotech.Close.Prices,data.AAPL$AAPL.Close)
+Infotech.Close.Prices <-cbind(Infotech.Close.Prices,data.NFLX$NFLX.Close)
+Infotech.Close.Prices[c(1:3,nrow(Infotech.Close.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Close.Prices <- data.BRK_B$BRK_B.Close
+Financials.Close.Prices <-cbind(Financials.Close.Prices,data.JPM$JPM.Close)
+Financials.Close.Prices <-cbind(Financials.Close.Prices,data.C$C.Close)
+Financials.Close.Prices <-cbind(Financials.Close.Prices,data.BLK$BLK.Close)
+Financials.Close.Prices[c(1:3,nrow(Financials.Close.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Close.Prices <- data.MCD$MCD.Close
+Consumer.Close.Prices <-cbind(Consumer.Close.Prices,data.SKX$SKX.Close)
+Consumer.Close.Prices <-cbind(Consumer.Close.Prices,data.SBUX$SBUX.Close)
+Consumer.Close.Prices <-cbind(Consumer.Close.Prices,data.NKE$NKE.Close)
+Consumer.Close.Prices[c(1:3,nrow(Consumer.Close.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.prcret.all <- cbind(Infotech.Close.Prices,Financials.Close.Prices, Consumer.Close.Prices)
+Portfolio.prcret.all[c(1:3,nrow(Portfolio.prcret.all)),]
+
+
+```
+
+
+
+third year 
+
+```{r}
+### Portfolio Price Return for Homework period 2015-01-01 to 2023-12-31 
+
+
+
+Portfolio.prcret.15_23 <- subset(Portfolio.prcret.all,
+                    + index(Portfolio.prcret.all) >= "2014-12-31" &
+                    + index(Portfolio.prcret.all) <= "2023-12-31")
+Portfolio.prcret.15_23[c(1:3,nrow(Portfolio.prcret.15_23))]
+
+Portfolio.prcret.15_23.df<- data.frame(date = index(Portfolio.prcret.15_23), coredata(Portfolio.prcret.15_23))
+```
+December 31, 2011 was Saturday and January 02, 2012 was observed as New Years Holiday 
+
+
+```{r}
+## Daily Price Returns - Arithmetic
+
+
+#Calculate Price Return (using Delt command)
+Portfolio.prc.ret = Portfolio.prcret.15_23 
+Portfolio.prc.ret$NVDA.prc.ret <- Delt(Portfolio.prc.ret$NVDA.Close)
+Portfolio.prc.ret$MSFT.prc.ret <- Delt(Portfolio.prc.ret$MSFT.Close)
+Portfolio.prc.ret$AAPL.prc.ret <- Delt(Portfolio.prc.ret$AAPL.Close)
+Portfolio.prc.ret$NFLX.prc.ret <- Delt(Portfolio.prc.ret$NFLX.Close)
+
+Portfolio.prc.ret$BRK_B.prc.ret <- Delt(Portfolio.prc.ret$BRK_B.Close)
+Portfolio.prc.ret$JPM.prc.ret <- Delt(Portfolio.prc.ret$JPM.Close)
+Portfolio.prc.ret$C.prc.ret <- Delt(Portfolio.prc.ret$C.Close)
+Portfolio.prc.ret$BLK.prc.ret <- Delt(Portfolio.prc.ret$BLK.Close)
+
+Portfolio.prc.ret$MCD.prc.ret <- Delt(Portfolio.prc.ret$MCD.Close)
+Portfolio.prc.ret$SKX.prc.ret <- Delt(Portfolio.prc.ret$SKX.Close)
+Portfolio.prc.ret$SBUX.prc.ret <- Delt(Portfolio.prc.ret$SBUX.Close)
+Portfolio.prc.ret$NKE.prc.ret <- Delt(Portfolio.prc.ret$NKE.Close)
+
+
+Portfolio.prc.ret <- Portfolio.prc.ret[,-c(1:ncol(Portfolio.prcret.15_23))]
+Portfolio.prc.ret[c(1:3,nrow(Portfolio.prc.ret)),]
+
+
+```
+
+```{r}
+## Daily Price Returns - logarithmic 
+
+#Calculate Log Price Return (using Delt command)
+Portfolio.log.ret = Portfolio.prcret.15_23 
+Portfolio.log.ret$NVDA.prclog.ret <- diff(log(Portfolio.log.ret$NVDA.Close))
+Portfolio.log.ret$MSFT.prclog.ret <- diff(log(Portfolio.log.ret$MSFT.Close))
+Portfolio.log.ret$AAPL.prclog.ret <- diff(log(Portfolio.log.ret$AAPL.Close))
+Portfolio.log.ret$NFLX.prclog.ret <- diff(log(Portfolio.log.ret$NFLX.Close))
+
+
+
+Portfolio.log.ret$BRK_B.prclog.ret <- diff(log(Portfolio.log.ret$BRK_B.Close))
+Portfolio.log.ret$JPM.prclog.ret <- diff(log(Portfolio.log.ret$JPM.Close))
+Portfolio.log.ret$C.prclog.ret <- diff(log(Portfolio.log.ret$C.Close))
+Portfolio.log.ret$BLK.prclog.ret <- diff(log(Portfolio.log.ret$BLK.Close))
+
+Portfolio.log.ret$MCD.prclog.ret <- diff(log(Portfolio.log.ret$MCD.Close))
+Portfolio.log.ret$SKX.prclog.ret <- diff(log(Portfolio.log.ret$SKX.Close))
+Portfolio.log.ret$SBUX.prclog.ret <- diff(log(Portfolio.log.ret$SBUX.Close))
+Portfolio.log.ret$NKE.prclog.ret <- diff(log(Portfolio.log.ret$NKE.Close))
+
+Portfolio.log.ret <- Portfolio.log.ret[,-c(1:ncol(Portfolio.prcret.15_23))]
+Portfolio.log.ret[c(1:3,nrow(Portfolio.log.ret)),]
+
+
+```
+
+
+```{r}
+## PORTFOLIO RETURNS 
+
+########################### sum of all close values
+Portfolio.prcret.15_23.rsum<- data.frame(date = index(Portfolio.prcret.15_23), coredata(Portfolio.prcret.15_23))
+
+Portfolio.prcret.15_23.rsum <-data.frame(rowSums(Portfolio.prcret.15_23.rsum[,2:(ncol(Portfolio.prcret.15_23)+1)]))
+
+# Portfolio.prcret.15_23.rsum[c(1:3,nrow(Portfolio.prcret.15_23.rsum)),]
+
+
+names(Portfolio.prcret.15_23.rsum) <- paste("port15_23.close")
+
+Portfolio.prcret.15_23.rsum$date <- Portfolio.prcret.15_23.df$date
+Portfolio.prcret.15_23.rsum <- Portfolio.prcret.15_23.rsum[,c("date", "port15_23.close")]
+Portfolio.prcret.15_23.rsum[c(1:3,nrow(Portfolio.prcret.15_23.rsum)),]
+
+
+# Portfolio.prcret.15_23[c(1:3,nrow(Portfolio.prcret.15_23)),]
+```
+
+
+
+```{r}
+## Daily Price Returns - Arithmetic
+
+
+#Calculate Price Return (using Delt command)
+Portfolio.prc.ret.rsum <- xts(Portfolio.prcret.15_23.rsum$port15_23.close,order.by=Portfolio.prcret.15_23.rsum$date)
+names(Portfolio.prc.ret.rsum) <- paste(c("port15_23.close"))
+# Portfolio.prc.ret.rsum = Portfolio.prcret.15_23.rsum
+Portfolio.prc.ret.rsum$port15_23.prc.ret <- Delt(Portfolio.prc.ret.rsum$port15_23.close)
+Portfolio.prc.ret.rsum[c(1:3,nrow(Portfolio.prc.ret.rsum)),]
+
+
+
+## Daily Price Returns - logarithmic 
+
+#Calculate Log Price Return (using Delt command)
+Portfolio.log.ret.rsum = xts(Portfolio.prcret.15_23.rsum$port15_23.close,order.by=Portfolio.prcret.15_23.rsum$date)
+names(Portfolio.log.ret.rsum) <- paste(c("port15_23.close"))
+
+Portfolio.log.ret.rsum$port15_23.log.ret <- diff(log(Portfolio.log.ret.rsum$port15_23.close))
+# Portfolio.log.ret <- Portfolio.log.ret[,-c(1:4)]
+Portfolio.log.ret.rsum[c(1:3,nrow(Portfolio.log.ret.rsum)),]
+
+
+```
+
+
+
+
+
+Part A -- Individual Security Returns 
+1. Calculate Returns 
+a) Calculate portfolio price returns for the homework period
+
+2.  Dividend reinvestment strategy
+a)  Calculate portfolio total gross returns for the homework period
+b)  Calculate portfolio logarithmic gross returns for the homework period
+
+c)  Are the results the same?
+
+
+3.  Plot a comparison of Total Price returns and Total Gross returns
+
+Answers: Part A -- Individual Security Returns 
+1. Calculate Returns 
+a)Calculate portfolio price returns for the homework period
+
+
+```{r}
+### Portfolio Total Return for Homework period 2012-01-01 to 2012-12-31 
+
+
+Portfolio.totret.15_23 <- subset(Portfolio.totret.all,
+                    + index(Portfolio.totret.all) >= "2014-12-31" &
+                    + index(Portfolio.totret.all) <= "2023-12-31")
+Portfolio.totret.15_23[c(1:3,nrow(Portfolio.totret.15_23))]
+
+Portfolio.totret.15_23.df<- data.frame(date = index(Portfolio.totret.15_23), coredata(Portfolio.totret.15_23))
+
+```
+
+```{r}
+## Daily Total Returns - Arithmetic
+
+options(digits=3)
+#Calculate Total Return (using Delt command)
+Portfolio.tot.ret = Portfolio.totret.15_23 
+Portfolio.tot.ret$NVDA.tot.ret <- Delt(Portfolio.tot.ret$NVDA.Adjusted)
+Portfolio.tot.ret$MSFT.tot.ret <- Delt(Portfolio.tot.ret$MSFT.Adjusted)
+Portfolio.tot.ret$AAPL.tot.ret <- Delt(Portfolio.tot.ret$AAPL.Adjusted)
+Portfolio.tot.ret$NFLX.tot.ret <- Delt(Portfolio.tot.ret$NFLX.Adjusted)
+
+
+
+Portfolio.tot.ret$BRK_B.tot.ret <- Delt(Portfolio.tot.ret$BRK_B.Adjusted)
+Portfolio.tot.ret$JPM.tot.ret <- Delt(Portfolio.tot.ret$JPM.Adjusted)
+Portfolio.tot.ret$C.tot.ret <- Delt(Portfolio.tot.ret$C.Adjusted)
+Portfolio.tot.ret$BLK.tot.ret <- Delt(Portfolio.tot.ret$BLK.Adjusted)
+
+
+Portfolio.tot.ret$MCD.tot.ret <- Delt(Portfolio.tot.ret$MCD.Adjusted)
+Portfolio.tot.ret$SKX.tot.ret <- Delt(Portfolio.tot.ret$SKX.Adjusted)
+Portfolio.tot.ret$SBUX.tot.ret <- Delt(Portfolio.tot.ret$SBUX.Adjusted)
+Portfolio.tot.ret$NKE.tot.ret <- Delt(Portfolio.tot.ret$NKE.Adjusted)
+
+
+Portfolio.tot.ret <- Portfolio.tot.ret[,-c(1:ncol(Portfolio.totret.15_23))]
+Portfolio.tot.ret[c(1:3,nrow(Portfolio.tot.ret)),]
+
+
+```
+
+```{r}
+## Daily Total Returns - logarithmic 
+options(digits=3)
+#Calculate Log Total Return (using Delt command)
+Portfolio.totlog.ret = Portfolio.totret.15_23 
+Portfolio.totlog.ret$NVDA.totlog.ret <- diff(log(Portfolio.totlog.ret$NVDA.Adjusted))
+Portfolio.totlog.ret$MSFT.totlog.ret <- diff(log(Portfolio.totlog.ret$MSFT.Adjusted))
+Portfolio.totlog.ret$AAPL.totlog.ret <- diff(log(Portfolio.totlog.ret$AAPL.Adjusted))
+Portfolio.totlog.ret$NKLX.totlog.ret <- diff(log(Portfolio.totlog.ret$NFLX.Adjusted))
+
+
+Portfolio.totlog.ret$BRK_B.totlog.ret <- diff(log(Portfolio.totlog.ret$BRK_B.Adjusted))
+Portfolio.totlog.ret$JPM.totlog.ret <- diff(log(Portfolio.totlog.ret$JPM.Adjusted))
+Portfolio.totlog.ret$C.totlog.ret <- diff(log(Portfolio.totlog.ret$C.Adjusted))
+Portfolio.totlog.ret$BLK.totlog.ret <- diff(log(Portfolio.totlog.ret$BLK.Adjusted))
+
+
+Portfolio.totlog.ret$MCD.totlog.ret <- diff(log(Portfolio.totlog.ret$MCD.Adjusted))
+Portfolio.totlog.ret$SKX.totlog.ret <- diff(log(Portfolio.totlog.ret$SKX.Adjusted))
+Portfolio.totlog.ret$SBUX.totlog.ret <- diff(log(Portfolio.totlog.ret$SBUX.Adjusted))
+Portfolio.totlog.ret$NKE.totlog.ret <- diff(log(Portfolio.totlog.ret$NKE.Adjusted))
+
+Portfolio.totlog.ret <- Portfolio.totlog.ret[,-c(1:ncol(Portfolio.totret.15_23))]
+Portfolio.totlog.ret[c(1:3,nrow(Portfolio.totlog.ret)),]
+
+
+```
+
+
+
+
+
+
+difference between log return and arithmetic return for Total retursn
+
+```{r}
+## This is Q2.a Answer
+
+options(digits=3,scipen=1000)
+tot.rets <- cbind(Portfolio.tot.ret,Portfolio.totlog.ret)
+tot.rets[c(1:3,nrow(tot.rets)),]
+
+max(abs(tot.rets$NVDA.tot.ret-tot.rets$NVDA.totlog.ret),na.rm=TRUE)
+min(abs(tot.rets$NVDA.tot.ret-tot.rets$NVDA.totlog.ret),na.rm=TRUE)
+
+max(abs(tot.rets$JPM.tot.ret-tot.rets$JPM.totlog.ret),na.rm=TRUE)
+min(abs(tot.rets$JPM.tot.ret-tot.rets$JPM.totlog.ret),na.rm=TRUE)
+# options(digits=7,scipen=0) #back to default
+```
+
+######################################## PORTFOLIO RSUM ########################################
+
+```{r}
+## PORTFOLIO RETURNS 
+
+
+options(digits=7,scipen=10)
+
+########################### sum of all close values
+Portfolio.totret.15_23.rsum<- data.frame(date = index(Portfolio.totret.15_23), coredata(Portfolio.totret.15_23))
+Portfolio.totret.15_23.rsum <-data.frame(rowSums(Portfolio.totret.15_23.rsum[,2:(1+ncol(Portfolio.totret.15_23))]))
+
+# Portfolio.totret.15_23.rsum[c(1:3,nrow(Portfolio.totret.15_23.rsum)),]
+
+
+names(Portfolio.totret.15_23.rsum) <- paste("port15_23.adjusted")
+
+Portfolio.totret.15_23.rsum$date <- Portfolio.totret.15_23.df$date
+Portfolio.totret.15_23.rsum <- Portfolio.totret.15_23.rsum[,c("date", "port15_23.adjusted")]
+Portfolio.totret.15_23.rsum[c(1:3,nrow(Portfolio.totret.15_23.rsum)),]
+
+```
+```{r}
+#Calculate Total Return (using Delt command)
+Portfolio.tot.ret.rsum = xts(Portfolio.totret.15_23.rsum$port15_23.adjusted,order.by=Portfolio.totret.15_23.rsum$date)
+names(Portfolio.tot.ret.rsum) <- paste(c("port15_23.adjusted"))
+
+
+Portfolio.tot.ret.rsum$port15_23.tot.ret <- Delt(Portfolio.tot.ret.rsum$port15_23.adjusted)
+# Portfolio.tot.ret.rsum <- Portfolio.tot.ret.rsum[,-c(1:4)]
+Portfolio.tot.ret.rsum[c(1:3,nrow(Portfolio.tot.ret.rsum)),]
+
+
+
+
+## Daily Total Returns - logarithmic 
+
+#Calculate Log Price Return (using Delt command)
+Portfolio.totlog.ret.rsum = xts(Portfolio.totret.15_23.rsum$port15_23.adjusted,order.by=Portfolio.totret.15_23.rsum$date)
+names(Portfolio.totlog.ret.rsum) <- paste(c("port15_23.adjusted"))
+
+Portfolio.totlog.ret.rsum$port15_23.totlog.ret <- diff(log(Portfolio.totlog.ret.rsum$port15_23.adjusted))
+# Portfolio.log.ret <- Portfolio.log.ret[,-c(1:4)]
+Portfolio.totlog.ret.rsum[c(1:3,nrow(Portfolio.totlog.ret.rsum)),]
+
+
+
+# options(digits=3,scipen=1000)
+tot.rets.rsum <- cbind(Portfolio.tot.ret.rsum,Portfolio.totlog.ret.rsum[,-c(1)])
+tot.rets.rsum[c(1:3,nrow(tot.rets.rsum)),]
+
+
+```
+
+############################### PORTFOLIO RSUM END ############################
+
+
+
+
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<gross returns>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+2. Dividend reinvestment strategy
+a) Calculate portfolio total gross returns for the homework period
+b) Calculate portfolio logarithmic gross returns for the homework period
+c) Are the results the same?
+
+Cumulating Arithmetic Returns
+
+
+```{r}
+options(digits=7,scipen=100)
+Portfolio.acum <- tot.rets
+
+Portfolio.acum[1,] <-0   ### Set first day total return to zero (investment day)
+
+
+
+
+# <<<<< Cumulating Arithmetic Returns>>>
+
+#### Gross return (1 + net total return) 
+Portfolio.acum$NVDA.GrossRet <- 1+Portfolio.acum$NVDA.tot.ret
+Portfolio.acum$MSFT.GrossRet <- 1+Portfolio.acum$MSFT.tot.ret
+Portfolio.acum$AAPL.GrossRet <- 1+Portfolio.acum$AAPL.tot.ret
+Portfolio.acum$NFLX.GrossRet <- 1+Portfolio.acum$NFLX.tot.ret
+
+Portfolio.acum$BRK_B.GrossRet <- 1+Portfolio.acum$BRK_B.tot.ret
+Portfolio.acum$JPM.GrossRet <- 1+Portfolio.acum$JPM.tot.ret
+Portfolio.acum$C.GrossRet <- 1+Portfolio.acum$C.tot.ret
+Portfolio.acum$BLK.GrossRet <- 1+Portfolio.acum$BLK.tot.ret
+
+Portfolio.acum$MCD.GrossRet <- 1+Portfolio.acum$MCD.tot.ret
+Portfolio.acum$SKX.GrossRet <- 1+Portfolio.acum$SKX.tot.ret
+Portfolio.acum$SBUX.GrossRet <- 1+Portfolio.acum$SBUX.tot.ret
+Portfolio.acum$NKE.GrossRet <- 1+Portfolio.acum$NKE.tot.ret
+
+
+#### Cummulative Gross return ( product of all the gross returns for the preiod)
+Portfolio.acum$NVDA.GrossCum <- cumprod(Portfolio.acum$NVDA.GrossRet)
+Portfolio.acum$MSFT.GrossCum <- cumprod(Portfolio.acum$MSFT.GrossRet)
+Portfolio.acum$AAPL.GrossCum <- cumprod(Portfolio.acum$AAPL.GrossRet)
+Portfolio.acum$NFLX.GrossCum <- cumprod(Portfolio.acum$NFLX.GrossRet)
+
+Portfolio.acum$BRK_B.GrossCum <- cumprod(Portfolio.acum$BRK_B.GrossRet)
+Portfolio.acum$JPM.GrossCum <- cumprod(Portfolio.acum$JPM.GrossRet)
+Portfolio.acum$C.GrossCum <- cumprod(Portfolio.acum$C.GrossRet)
+Portfolio.acum$BLK.GrossCum <- cumprod(Portfolio.acum$BLK.GrossRet)
+
+Portfolio.acum$MCD.GrossCum <- cumprod(Portfolio.acum$MCD.GrossRet)
+Portfolio.acum$SKX.GrossCum <- cumprod(Portfolio.acum$SKX.GrossRet)
+Portfolio.acum$SBUX.GrossCum <- cumprod(Portfolio.acum$SBUX.GrossRet)
+Portfolio.acum$NKE.GrossCum <- cumprod(Portfolio.acum$NKE.GrossRet)
+
+
+
+#### Convert Cumulative Gross Returns to Cumulative Net Returns (-1)
+Portfolio.acum$NVDA.NetCum <- Portfolio.acum$NVDA.GrossCum - 1
+Portfolio.acum$MSFT.NetCum <- Portfolio.acum$MSFT.GrossCum - 1
+Portfolio.acum$AAPL.NetCum <- Portfolio.acum$AAPL.GrossCum - 1
+Portfolio.acum$NFLX.NetCum <- Portfolio.acum$NFLX.GrossCum - 1
+
+Portfolio.acum$BRK_B.NetCum <- Portfolio.acum$BRK_B.GrossCum - 1
+Portfolio.acum$JPM.NetCum <- Portfolio.acum$JPM.GrossCum - 1
+Portfolio.acum$C.NetCum <- Portfolio.acum$C.GrossCum - 1
+Portfolio.acum$BLK.NetCum <- Portfolio.acum$BLK.GrossCum - 1
+
+Portfolio.acum$MCD.NetCum <- Portfolio.acum$MCD.GrossCum - 1
+Portfolio.acum$SKX.NetCum <- Portfolio.acum$SKX.GrossCum - 1
+Portfolio.acum$SBUX.NetCum <- Portfolio.acum$SBUX.GrossCum - 1
+Portfolio.acum$NKE.NetCum <- Portfolio.acum$NKE.GrossCum - 1
+
+
+# for (stock in stocks) {print(Portfolio.acum[,paste0(stock, ".GrossCum")])}
+
+
+
+# <<<<< Cumulating Logarithmic Returns>>>
+
+exp(sum(Portfolio.acum$NVDA.totlog.ret))-1
+# exp(sum(Portfolio.acum$MSFT.totlog.ret))-1
+# exp(sum(Portfolio.acum$AAPL.totlog.ret))-1
+# exp(sum(Portfolio.acum$NFLX.totlog.ret))-1
+# 
+# exp(sum(Portfolio.acum$BRK_B.totlog.ret))-1
+# exp(sum(Portfolio.acum$JPM.totlog.ret))-1
+# exp(sum(Portfolio.acum$C.totlog.ret))-1
+# exp(sum(Portfolio.acum$BLK.totlog.ret))-1
+# 
+# exp(sum(Portfolio.acum$MCD.totlog.ret))-1
+# exp(sum(Portfolio.acum$SKX.totlog.ret))-1
+# exp(sum(Portfolio.acum$SBUX.totlog.ret))-1
+exp(sum(Portfolio.acum$NKE.totlog.ret))-1
+
+
+Portfolio.acum[c(1:3,nrow(Portfolio.acum)),]
+
+
+```
+Yes. total gross returns and logarithmic gross returns results are same. 
+
+
+######################################## PORTFOLIO RSUM  ########################################
+```{r}
+Portfolio.acum.rsum <- tot.rets.rsum
+
+Portfolio.acum.rsum[1,] <-0   ### Set first day total return to zero (investment day)
+
+
+
+
+# <<<<< Cumulating Arithmetic Returns>>>
+
+#### Gross return (1 + net total return) 
+Portfolio.acum.rsum$port15_23.GrossRet <- 1+Portfolio.acum.rsum$port15_23.tot.ret
+
+
+#### Cummulative Gross return ( product of all the gross returns for the preiod)
+Portfolio.acum.rsum$port15_23.GrossCum <- cumprod(Portfolio.acum.rsum$port15_23.GrossRet)
+
+
+#### Convert Cumulative Gross Returns to Cumulative Net Returns (-1)
+Portfolio.acum.rsum$port15_23.NetCum <- Portfolio.acum.rsum$port15_23.GrossCum - 1
+
+# for (stock in stocks) {print(Portfolio.acum[,paste0(stock, ".GrossCum")])}
+
+
+
+# <<<<< Cumulating Logarithmic Returns>>>
+
+exp(sum(Portfolio.acum.rsum$port15_23.totlog.ret))-1
+
+Portfolio.acum.rsum[c(1:3,nrow(Portfolio.acum.rsum)),]
+```
+Port Cumulative Net Returns and Cumulating Logarithmic Returns are the same
+
+######################################## PORTFOLIO RSUM END ########################################
+
+
+
+
+
+3. Plot a comparison of Total Price returns and Total Gross returns
+
+
+```{r}
+
+Daily.rets <- cbind(Portfolio.prc.ret,Portfolio.tot.ret)
+Daily.rets[1,]<-0
+
+# Calculate gross returns
+Daily.gross.rets <-1+Daily.rets
+# Define new column names
+new_column_names <- c(
+                      "NVDA.gross.prc", "MSFT.gross.prc", "AAPL.gross.prc", "NFLX.gross.prc",
+                      "BRK_B.gross.prc",  "JPM.gross.prc", "C.gross.prc",  "BLK.gross.prc",
+                      "MCD.gross.prc",  "SKX.gross.prc", "SBUX.gross.prc",  "NKE.gross.prc",
+                      "NVDA.gross.tot", "MSFT.gross.tot","AAPL.gross.tot", "NFLX.gross.tot", 
+                      "BRK_B.gross.tot", "JPM.gross.tot", "C.gross.tot",  "BLK.gross.tot",
+                      "MCD.gross.tot",  "SKX.gross.tot", "SBUX.gross.tot",  "NKE.gross.tot"
+                      )
+
+# Set the new column names
+colnames(Daily.gross.rets) <- new_column_names
+
+
+# Calculate gross returns cumprod
+Daily.cum.rets <-cumprod(Daily.gross.rets)
+# new_column_names <- c("NVDA.cum.prc", "MSFT.cum.prc", "BRK_B.cum.prc",  "JPM.cum.prc", "NVDA.cum.tot", "MSFT.cum.tot", "BRK_B.cum.tot", "JPM.cum.tot")
+
+new_column_names <- c(
+                      "NVDA.cum.prc", "MSFT.cum.prc", "AAPL.cum.prc", "NFLX.cum.prc",
+                      "BRK_B.cum.prc",  "JPM.cum.prc", "C.cum.prc",  "BLK.cum.prc",
+                      "MCD.cum.prc",  "SKX.cum.prc", "SBUX.cum.prc",  "NKE.cum.prc",
+                      "NVDA.cum.tot", "MSFT.cum.tot","AAPL.cum.tot", "NFLX.cum.tot", 
+                      "BRK_B.cum.tot", "JPM.cum.tot", "C.cum.tot",  "BLK.cum.tot",
+                      "MCD.cum.tot",  "SKX.cum.tot", "SBUX.cum.tot",  "NKE.cum.tot"
+                      )
+
+
+colnames(Daily.cum.rets) <- new_column_names
+
+
+
+
+Daily.rets[c(1:3,nrow(Daily.rets)),]
+
+Daily.gross.rets[c(1:3,nrow(Daily.gross.rets)),]
+
+Daily.cum.rets[c(1:3,nrow(Daily.cum.rets)),]
+
+
+```
+Plot a comparison of Total Price returns and Total Gross returns
+```{r}
+# y.range <- range(Daily.cum.rets)
+# y.range
+
+# Convert xts to data frame
+df1 <- data.frame(Date = index(Daily.cum.rets), coredata(Daily.cum.rets))
+
+# df1 <-Daily.cum.rets
+### NVDA
+plot(df1$Date,df1$NVDA.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$NVDA.cum.tot),
+        # minor.ticks=FALSE,
+        main = "NVDA Stock Performance Based on \n Total Returns and Price Returns")
+        
+lines(df1$Date,df1$NVDA.cum.tot, col = 2, lty = 2)
+
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("NVDA.cum.prc", "NVDA.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+# Customize x-axis labels to show months
+# axis(1, at = seq(min(df1$Date), max(df1$Date), by = "3 months"), labels = format(seq(min(df1$Date), max(df1$Date), by = "3 months"), "%Y-%m"), las = 2)
+
+### MSFT
+
+plot(df1$Date,df1$MSFT.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$MSFT.cum.tot),
+        # minor.ticks=FALSE,
+        main = "MSFT Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$MSFT.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("MSFT.cum.prc", "MSFT.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+### AAPL
+
+plot(df1$Date,df1$AAPL.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$AAPL.cum.tot),
+        # minor.ticks=FALSE,
+        main = "AAPL Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$AAPL.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("AAPL.cum.prc", "AAPL.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+### NFLX
+
+plot(df1$Date,df1$NFLX.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$NFLX.cum.tot),
+        # minor.ticks=FALSE,
+        main = "NFLX Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$NFLX.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("NFLX.cum.prc", "NFLX.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+## BRK_B
+
+plot(df1$Date,df1$BRK_B.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$BRK_B.cum.tot),
+        # minor.ticks=FALSE,
+        main = "BRK_B Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$BRK_B.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("BRK_B.cum.prc", "BRK_B.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+##JPM
+
+plot(df1$Date,df1$JPM.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$JPM.cum.tot),
+        # minor.ticks=FALSE,
+        main = "JPM Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$JPM.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("JPM.cum.prc", "JPM.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+### C
+
+plot(df1$Date,df1$C.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$C.cum.tot),
+        # minor.ticks=FALSE,
+        main = "C Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$C.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("C.cum.prc", "C.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+### BLK
+
+plot(df1$Date,df1$BLK.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$BLK.cum.tot),
+        # minor.ticks=FALSE,
+        main = "BLK Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$BLK.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("BLK.cum.prc", "BLK.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+```
+
+```{r}
+
+
+
+
+### MCD
+
+plot(df1$Date,df1$MCD.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$MCD.cum.tot),
+        # minor.ticks=FALSE,
+        main = "MCD Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$MCD.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("MCD.cum.prc", "MCD.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+### SKX
+
+plot(df1$Date,df1$SKX.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$SKX.cum.tot),
+        # minor.ticks=FALSE,
+        main = "SKX Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$SKX.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("SKX.cum.prc", "SKX.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+
+### SBUX
+
+plot(df1$Date,df1$SBUX.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$SBUX.cum.tot),
+        # minor.ticks=FALSE,
+        main = "SBUX Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$SBUX.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("SBUX.cum.prc", "SBUX.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+
+### NKE
+
+plot(df1$Date,df1$NKE.cum.prc,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(Daily.cum.rets$NKE.cum.tot),
+        # minor.ticks=FALSE,
+        main = "NKE Stock Performance Based on \n Total Returns and Price Returns")
+lines(df1$Date,df1$NKE.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("NKE.cum.prc", "NKE.cum.tot", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+```
+
+
+
+
+########################################## PORTFOLIO COMBINED RSUM##########################
+
+
+```{r}
+
+Daily.rets.rsum <- cbind(Portfolio.prc.ret.rsum[,-c(1)],Portfolio.tot.ret.rsum[,-c(1)])
+Daily.rets.rsum[1,]<-0
+
+# Calculate gross returns
+Daily.gross.rets.rsum <-1+Daily.rets.rsum
+# Define new column names
+new_column_names <- c("port15_23gross.prc", "port15_23.gross.tot")
+
+# Set the new column names
+colnames(Daily.gross.rets.rsum) <- new_column_names
+
+
+# Calculate gross returns cumprod
+Daily.cum.rets.rsum <-cumprod(Daily.gross.rets.rsum)
+new_column_names <- c("port15_23.cum.prc", "port15_23.cum.tot")
+colnames(Daily.cum.rets.rsum) <- new_column_names
+
+
+
+
+Daily.rets.rsum[c(1:3,nrow(Daily.rets.rsum)),]
+
+Daily.gross.rets.rsum[c(1:3,nrow(Daily.gross.rets.rsum)),]
+
+Daily.cum.rets.rsum[c(1:3,nrow(Daily.cum.rets.rsum)),]
+
+
+
+# Convert xts to data frame
+df1.rsum <- data.frame(Date = index(Daily.cum.rets.rsum), coredata(Daily.cum.rets.rsum))
+
+
+
+plot(df1.rsum$Date,df1.rsum$port15_23.cum.tot,
+        col = 1, lty = 1, lwd=2, 
+        type="l",
+        # auto.grid=FALSE,
+        xlab="Date",
+        ylab="Value of Investment ($)",
+        ylim=range(df1.rsum$port15_23.cum.tot),
+        # minor.ticks=FALSE,
+        main = "Portfolio Performance Based on \n Total Returns and Price Returns \n 01-01-2015 to 12-31-2023")
+
+
+lines(df1.rsum$Date,df1.rsum$port15_23.cum.tot, col = 2, lty = 2)
+# Add abline at y = 1
+abline(h = 1, col = 3)
+
+# Optionally, add a legend
+legend("topleft", legend = c("Port Cum Price", "Port Cum Total", "abline(h = 1)"), col = 1:3, lty = 1:3)
+
+
+```
+
+
+
+
+*** Note to Self Before Submitting: 
+- Check Total Price Returns and Total Gross Returns formula - checked
+- Check plot - checked
+- Check period - checked
+
+Total 
+```{r}
+Portfolio.totret.all[c(1:3,nrow(Portfolio.totret.all)),]
+
+multi.2022 <- subset(Portfolio.totret.all,
+                    + index(Portfolio.totret.all) >= "2020-12-31" &
+                    + index(Portfolio.totret.all) <= "2022-12-31")
+multi.2022[c(1:3,nrow(multi.2022))]
+
+period.ret.2022 <- multi.2022[c(1,nrow(multi.2022)),]
+period.ret.2022
+
+## Calculate returns for each security over the investment period and convert to df 
+rets.2022 <- lapply(period.ret.2022,Delt)
+rets.2022
+
+rets.2022.df <- data.frame(rets.2022)
+rets.2022.df
+
+rets.2022.df <- rets.2022.df[2,]*100
+names(rets.2022.df) <- paste(c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE"))
+rets.2022.df
+
+```
+####################### Constructing portfolio returns ######################### 
+
+
+
+calculate weights for each security
+
+```{r}
+
+# i.NVDA <- 5000
+# i.MSFT <- 5000
+# i.AAPL <- 5000
+# i.NFLX <- 5000
+# 
+# i.BRK_B<-5000
+# i.JPM <- 5000
+# i.C   <- 5000
+# i.BLK <- 5000
+# 
+# i.MCD <- 5000
+# i.SKX <- 5000
+# i.SBUX<- 5000
+# i.NKE <- 5000
+# 
+# w.NVDA <- i.NVDA/(i.NVDA+i.MSFT+i.AAPL+i.NFLX+i.BRK_B+i.JPM+i.C+i.BLK+i.MCD+i.SKX+i.SBUX+i.NKE)
+# w.MSFT <- i.MSFT/(i.NVDA+i.MSFT+i.BRK_B+i.JPM)
+
+
+
+# Define initial investments
+investments <- c(NVDA = 5000, MSFT = 5000, AAPL = 5000, NFLX = 5000,
+                 BRK_B = 5000, JPM = 5000, C = 5000, BLK = 5000,
+                 MCD = 5000, SKX = 5000, SBUX = 5000, NKE = 5000)
+
+# Calculate w.NVDA
+w.NVDA <- investments["NVDA"] / sum(investments)
+w.MSFT <- investments["MSFT"] / sum(investments)
+w.AAPL <- investments["AAPL"] / sum(investments)
+w.NFLX <- investments["NFLX"] / sum(investments)
+
+w.BRK_B <- investments["BRK_B"] / sum(investments)
+w.JPM   <- investments["JPM"]   / sum(investments)
+w.C     <- investments["C"]     / sum(investments)
+w.BLK   <- investments["BLK"]   / sum(investments)
+
+w.MCD   <- investments["MCD"] / sum(investments)
+w.SKX   <- investments["SKX"]   / sum(investments)
+w.SBUX  <- investments["SBUX"]     / sum(investments)
+w.NKE   <- investments["NKE"]   / sum(investments)
+
+# Calculate portfolio returns (weights x return)
+port.ret.4asset <- 0
+port.ret.4asset <- (w.NVDA*rets.2022.df$NVDA   + w.MSFT*rets.2022.df$MSFT + w.AAPL*rets.2022.df$AAPL + w.NFLX*rets.2022.df$NFLX +
+                   w.BRK_B*rets.2022.df$BRK_B + w.JPM*rets.2022.df$JPM   + w.C*rets.2022.df$C + w.BLK*rets.2022.df$BLK +
+                   w.MCD*rets.2022.df$MCD + w.SKX*rets.2022.df$SKX   + w.SBUX*rets.2022.df$SBUX + w.NKE*rets.2022.df$NKE)
+port.ret.4asset
+
+```
+MATRIX METHOD
+
+```{r}
+# wgt <- c(0.08333333 ,0.08333333 ,0.08333333 ,0.08333333 )
+wgt <- rep(1/12, 12)
+
+
+mat.wgt <- matrix(wgt,1) 
+mat.wgt
+
+ret <- unlist(rets.2022.df)
+# ret <- c(rets.2022.df$NVDA,rets.2022.df$MSFT,rets.2022.df$BRK_B,rets.2022.df$JPM)
+
+mat.ret <- matrix(ret,12)
+mat.ret
+
+
+port.ret <- mat.wgt %*% mat.ret
+port.ret
+
+```
+
+
+#####################################################################
+Constructing Benchmark Portfolio Returns
+#####################################################################
+
+
+
+The objective is to create a hypothetical EW and VW portfolio consisting of NVDA, MSFT, BRK_B and JPM using returns in 2022.
+
+```{r}
+
+port <- cbind(Portfolio.totret.all, Portfolio.prcret.all)
+
+port[c(1:3,nrow(port)),]
+port$NVDA.ret <- Delt(port$NVDA.Adjusted)
+port$MSFT.ret <- Delt(port$MSFT.Adjusted)
+port$BRK_B.ret <- Delt(port$BRK_B.Adjusted)
+port$JPM.ret <- Delt(port$JPM.Adjusted)
+port[c(1:3,nrow(port)),]
+
+
+port.df <- data.frame(Date = index(port), coredata(port))
+port.df[c(1:3,nrow(port.df)),]
+```
+
+## Portfolio investment period - 3rd year i.e 2022
+
+```{r}
+port.df.2022 <- subset(port.df,
+                    port.df$Date >= "2011-12-30" &
+                    port.df$Date <= "2022-12-31")
+port.df.2022[c(1:3,nrow(port.df.2022)),]
+
+### This is the benchmark portfolio for 2022
+```
+
+#########################
+Equal-Weighted Portfolio
+#########################
+
+Equal-weight to small firms and large firms
+
+Example: S&P 500 Equal Weight Index
+
+The indexes are balanced quarterly which means that in between quarters the constituent weights are allowed to fluctuate based on their performance.
+
+On each rebalancing date, the weights of each firm is set to reset to 1/N (number of securities in the portfolio)
+
+
+```{r}
+
+ewport <- port.df.2022[c(1,(ncol(port.df.2022)-3):ncol(port.df.2022))] 
+ewport[c(1:3,nrow(ewport)),]
+
+names(ewport) <-paste(c("date","NVDA","MSFT","BRK_B","JPM"))
+rownames(ewport) <-seq(1:nrow(ewport))
+ewport[c(1:3,nrow(ewport)),]
+
+
+## gross returns ( 1 + returns)
+
+ewport.xts <-xts(ewport[, -1], order.by = as.Date(ewport$date))
+ewport.xts <- 1+ewport.xts
+ewport <- data.frame(date = index(ewport.xts), coredata(ewport.xts))
+
+ewport[c(1:3,nrow(ewport)),]
+
+
+```
+Equally weighted portfolio for Q1 2022
+
+```{r}
+## gross returns ( 1 + returns)
+
+ew.q1 <- subset(ewport,
+                ewport$date >= as.Date("2011-12-30") &
+                ewport$date <= as.Date("2022-03-31"))
+ew.q1[c(1:3,nrow(ew.q1)),]
+
+# Set the first row, columns 2:4 to 1
+ew.q1[1, 2:ncol(ew.q1)] <- 1
+
+# Apply cumprod to selected columns
+
+# ew.q1$NVDA <- cumprod(ew.q1$NVDA)
+# ew.q1$MSFT <- cumprod(ew.q1$MSFT)
+# ew.q1$BRK_B <- cumprod(ew.q1$BRK_B)
+# ew.q1$JPM <- cumprod(ew.q1$JPM)
+
+
+columns_to_cumprod <- c("NVDA", "MSFT", "BRK_B", "JPM")
+ew.q1[columns_to_cumprod] <- cumprod(ew.q1[columns_to_cumprod])   ## Simplified previous code
+
+# Select specific rows and columns
+ew.q1[c(1:3, nrow(ew.q1)), ]
+
+
+```
+
+```{r}
+num.sec <- 4 ## Number of securities
+
+ew.q1$NVDA.idx <- (1/num.sec)*(ew.q1$NVDA)  ##(q1.inv/num.sec)
+ew.q1$MSFT.idx <- (1/num.sec)*(ew.q1$MSFT)
+ew.q1$BRK_B.idx <- (1/num.sec)*(ew.q1$BRK_B)
+ew.q1$JPM.idx <- (1/num.sec)*(ew.q1$JPM)
+
+
+ew.q1[c(1:3, nrow(ew.q1)), ]
+
+```
+
+```{r}
+# q1.val <- data.frame(rowSums(ew.q1[,6:9]))
+q1.val <- data.frame(rowSums(ew.q1[,(ncol(ew.q1)-num.sec+1):ncol(ew.q1)]))
+q1.val[c(1:3,nrow(q1.val)),]
+
+
+names(q1.val) <- paste("port.val")
+q1.val$date <- ew.q1$date
+q1.val[c(1:3,nrow(q1.val)),]
+
+q2.inv <- q1.val[nrow(q1.val),1]
+q2.inv
+
+```
+The value of 1.169619 is used at the beginning of the seconf quarter instead of 1.00
+
+
+
+Calculate the index value for each security during the quarter
+
+q1.val holds the portfolio values for the first quarter
+
+q2.inv holds the aggregate portfolio value at the end of Q1
+
+q2.inv will be redistributed equally among three stocks at the beginning of the second quarter
+```{r}
+
+ew.q2 <- subset(ewport,
+                ewport$date >= as.Date("2022-04-01") &
+                ewport$date <= as.Date("2022-06-30"))
+ew.q2[c(1:3,nrow(ew.q2)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "BRK_B", "JPM")
+ew.q2[columns_to_cumprod2] <- cumprod(ew.q2[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+ew.q2[c(1:3, nrow(ew.q2)), ]
+
+
+ew.q2$NVDA.idx <- (q2.inv/num.sec)*(ew.q2$NVDA)
+ew.q2$MSFT.idx <- (q2.inv/num.sec)*(ew.q2$MSFT)
+ew.q2$BRK_B.idx <- (q2.inv/num.sec)*(ew.q2$BRK_B)
+ew.q2$JPM.idx <- (q2.inv/num.sec)*(ew.q2$JPM)
+
+
+ew.q2[c(1:3, nrow(ew.q2)), ]
+
+q2.val <- data.frame(rowSums(ew.q2[,(ncol(ew.q2)-num.sec+1):ncol(ew.q2)]))
+q2.val[c(1:3,nrow(q2.val)),]
+
+
+names(q2.val) <- paste("port.val")
+q2.val$date <- ew.q2$date
+q2.val[c(1:3,nrow(q2.val)),]
+
+q3.inv <- q2.val[nrow(q2.val),1]
+q3.inv
+```
+
+
+The portfolio is  performing well
+
+
+Quarter 3
+
+```{r}
+
+ew.q3 <- subset(ewport,
+                ewport$date >= as.Date("2022-07-01") &
+                ewport$date <= as.Date("2022-09-30"))
+ew.q3[c(1:3,nrow(ew.q3)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "BRK_B", "JPM")
+ew.q3[columns_to_cumprod2] <- cumprod(ew.q3[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+ew.q3[c(1:3, nrow(ew.q3)), ]
+
+
+ew.q3$NVDA.idx <- (q3.inv/num.sec)*(ew.q3$NVDA)
+ew.q3$MSFT.idx <- (q3.inv/num.sec)*(ew.q3$MSFT)
+ew.q3$BRK_B.idx <- (q3.inv/num.sec)*(ew.q3$BRK_B)
+ew.q3$JPM.idx <- (q3.inv/num.sec)*(ew.q3$JPM)
+
+
+ew.q3[c(1:3, nrow(ew.q3)), ]
+
+q3.val <- data.frame(rowSums(ew.q3[,(ncol(ew.q3)-num.sec+1):ncol(ew.q3)]))
+q3.val[c(1:3,nrow(q3.val)),]
+
+
+names(q3.val) <- paste("port.val")
+q3.val$date <- ew.q3$date
+q3.val[c(1:3,nrow(q3.val)),]
+
+q4.inv <- q3.val[nrow(q3.val),1]
+q4.inv
+```
+
+
+Quarter 4
+
+```{r}
+
+ew.q4 <- subset(ewport,
+                ewport$date >= as.Date("2022-10-01") &
+                ewport$date <= as.Date("2022-12-31"))
+ew.q4[c(1:3,nrow(ew.q4)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "BRK_B", "JPM")
+ew.q4[columns_to_cumprod2] <- cumprod(ew.q4[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+ew.q4[c(1:3, nrow(ew.q4)), ]
+
+
+ew.q4$NVDA.idx <- (q4.inv/num.sec)*(ew.q4$NVDA)
+ew.q4$MSFT.idx <- (q4.inv/num.sec)*(ew.q4$MSFT)
+ew.q4$BRK_B.idx <- (q4.inv/num.sec)*(ew.q4$BRK_B)
+ew.q4$JPM.idx <- (q4.inv/num.sec)*(ew.q4$JPM)
+
+
+ew.q4[c(1:3, nrow(ew.q4)), ]
+
+q4.val <- data.frame(rowSums(ew.q4[,(ncol(ew.q4)-num.sec+1):ncol(ew.q4)]))
+q4.val[c(1:3,nrow(q4.val)),]
+
+
+names(q4.val) <- paste("port.val")
+q4.val$date <- ew.q4$date
+q4.val[c(1:3,nrow(q4.val)),]
+
+# q5.inv <- q4.val[nrow(q4.val),1]
+# q5.inv
+```
+Combine quarterly EW portfolio values into one data object (ew.portval)
+```{r}
+ew.portval <- rbind(q1.val,q2.val,q3.val,q4.val)
+ew.portval[c(1:3,nrow(ew.portval)),]
+
+```
+Please note that this calculations do not include transactions costs incurred during each Q rebalancing.
+
+
+
+########################
+Value-Weighted Portfolio
+########################
+
+
+```{r}
+vwport <-port.df.2022[,-c(2:5)]
+vwport[c(1:3,nrow(vwport)),]
+
+
+rownames(vwport) <- seq(1:nrow(vwport))
+vwport[c(1:3,nrow(vwport)),] 
+```
+Converting Net Returns to Gross Returns
+
+```{r}
+vwport$NVDA.ret <- 1+vwport$NVDA.ret
+vwport$MSFT.ret <- 1+vwport$MSFT.ret
+vwport$BRK_B.ret <- 1+vwport$BRK_B.ret
+vwport$JPM.ret <- 1+vwport$JPM.ret
+vwport[c(1:3,nrow(vwport)),]
+```
+
+Calculate the market capitalization of each security in the portfolio - Market cap is equal to the price multiplied by the outstanding shares
+
+Construct a series of calendar days
+
+```{r}
+
+date <- seq(as.Date("2011-12-30"),as.Date("2022-12-31"),by=1)
+date <- data.frame(date)
+date[c(1:3,nrow(date)),]
+
+```
+Calculate the market capitalization of each security in the portfolio
+
+-Market cap is equal to the price multiplied by the outstanding shares
+
+Create data object with daily prices, filling in last avialable price on non-trading days
+```{r}
+PRICE.qtr <- vwport[,c(1:5)]
+PRICE.qtr[c(1:3,nrow(PRICE.qtr)),]
+colnames(PRICE.qtr)[colnames(PRICE.qtr) == "Date"] <- "date"
+PRICE.qtr[c(1:3,nrow(PRICE.qtr)),]
+```
+Calculate the market capitalization of each security in the portfolio - Market cap is equal to the price multiplied by the outstanding shares
+
+Create data object with daily prices, filling in last avialable price on non-trading days
+
+Merge date and PRICE.qtr using a combination of the na.locf and merge commands.
+
+The merge command combines two data objects. Using the all.x=TRUE option tells R that when merging we should keep all the data in the “by” variable that is available in the x=date data object.
+
+
+```{r}
+PRICE.qtr <- na.locf(merge(x=date,y=PRICE.qtr,by="date",all.x=TRUE))
+PRICE.qtr[c(1:3,nrow(PRICE.qtr)),]
+
+```
+
+Calculate the market capitalization of each security in the portfolio
+
+Market cap is equal to the price multiplied by the outstanding shares
+Keep only prices at the end of each calendar quarter
+
+
+```{r}
+PRICE.qtr <- subset(PRICE.qtr,
+                    PRICE.qtr$date==as.Date("2021-12-31") |
+                    PRICE.qtr$date==as.Date("2022-03-31") |
+                    PRICE.qtr$date==as.Date("2022-06-30") |
+                    PRICE.qtr$date==as.Date("2022-09-30"))
+PRICE.qtr
+```
+
+Calculate the market capitalization of each security in the portfolio
+
+Market cap is equal to the price multiplied by the outstanding shares
+Obtain shares outstanding data from SEC filings
+
+Available from the SEC EDGAR database (Form 10k - Form 10-Q)
+https://www.sec.gov/edgar/browse/?CIK=1018724&owner=exclude
+
+Enter the data manually
+
+AMZN: 
+Number of shares of common stock outstanding as of January 18, 2013=454,551,069
+455,242,694 shares of common stock, par value $0.01 per share, outstanding as of April 12, 2013
+456,883,519 shares of common stock, par value $0.01 per share, outstanding as of July 12, 2013
+457,733,620 shares of common stock, par value $0.01 per share, outstanding as of October 11, 2013
+
+
+
+
+PRICE.qtr$AMZN.shout <- c(454000000,455000000,457000000,458000000)
+PRICE.qtr$AAPL.shout <- c(1115233000,1084766000,1065046000,1013059000)
+PRICE.qtr$IBM.shout <- c(1117367676,1108794396,1095425823,1085854383)
+
+<!-- ```{r} -->
+<!-- library(edgarWebR) -->
+
+<!-- # Replace "AAPL" with the stock symbol of the company you're interested in -->
+<!-- company_cik <- c(1018724) -->
+
+<!-- # Fetch 10-Q filings for the specified company within the date range -->
+<!-- filings <- getFilings(company_cik,c('10-K','10-Q'),2013,quarter=c(1,2,3),downl.permit = "n") -->
+
+<!-- # View the obtained filings -->
+<!-- print(filings) -->
+
+<!-- ``` -->
+
+
+NVDA: https://www.sec.gov/edgar/browse/?CIK=1045810&owner=exclude
+March 9, 2022: The number of shares of common stock outstanding as of March 9, 2022 was 616,028,107
+May 18, 2022: The number of shares of common stock, $0.001 par value, outstanding as of May 18, 2022, was 618,804,109
+August 17, 2022: The number of shares of common stock, $0.001 par value, outstanding as of August 17, 2022, was 619,476,242 .
+November 16, 2022: The number of shares of common stock, $0.001 par value, outstanding as of November 16, 2022, was 624,850,798 .
+
+
+
+MSFT: https://www.sec.gov/edgar/browse/?CIK=789019&owner=exclude
+Jan 2022: Class	Outstanding at January 17, 2022	Common Stock, $0.00000625 par value per share 8,390,771,388 shares	 
+Apr 2022: Class Outstanding at April 17, 2022 Common Stock, $0.00000625 par value per share 8,400,866,103 shares	
+July 18, 2022, there were 8,383,396,575 shares of common stock outstanding.
+October 15, 2022 Common Stock, $0.00000625 par value per share 8,416,462,491 shares
+
+
+BRK_B: https://www.sec.gov/edgar/browse/?CIK=1067983&owner=exclude
+February 15, 2022—Class B common stock, $0.0033 par value 1,072,262,656 shares	  
+April 27, 2022: Number of shares of common stock outstanding as of April 27, 2022, Class A —     930,998, Class B —  1,080,368,809
+July 26, 2022: Number of shares of common stock outstanding as of July 26, 2022, Class A — 927,848, Class B —  1,086,380,702
+October 25, 2022: Number of shares of common stock outstanding as of October 25, 2022, Class A — 919,298	Class B —	1,099,792,631	  
+
+
+
+JPM: https://www.sec.gov/edgar/browse/?CIK=19617&owner=exclude
+January 31, 2022: Number of shares of common stock outstanding as of January 31, 2022: 3,817,360,407
+April 30, 2022: Number of shares of common stock outstanding as of April 30, 2022: 3,806,666,475
+July 31, 2022: Number of shares of common stock outstanding as of July 31, 2022: 3,798,753,657
+October 31, 2022: Number of shares of common stock outstanding as of October 31, 2022: 3,801,401,625
+
+```{r}
+PRICE.qtr$NVDA.shout <- c(616028107,618804109,619476242,624850798)
+PRICE.qtr$MSFT.shout <- c(8390771388,8400866103 ,8383396575,8416462491)
+PRICE.qtr$BRK_B.shout <- c(1072262656,1080368809,1086380702,1099792631)
+PRICE.qtr$JPM.shout <- c(3817360407,3806666475,3798753657,3801401625)
+PRICE.qtr
+
+```
+Market cap is equal to the price multiplied by the outstanding shares
+Calculate market capitalization for each security
+
+-check that date and closing price are read-in as character variables
+
+```{r}
+str(PRICE.qtr)
+```
+Market cap is equal to the price multiplied by the outstanding shares
+To make the data object name more sensible to hold the weights of the securities, copy the data in PRICE.qtr into weights. Calculate the market cap for each security by multiplying that security’s closing price with its shares outstanding.
+
+```{r}
+weights <- PRICE.qtr
+weights$NVDA.mcap <- weights$NVDA.Close*weights$NVDA.shout
+weights$MSFT.mcap <- weights$MSFT.Close*weights$MSFT.shout
+weights$BRK_B.mcap <- weights$BRK_B.Close*weights$BRK_B.shout
+weights$JPM.mcap <- weights$JPM.Close*weights$JPM.shout
+weights
+```
+Market cap is equal to the price multiplied by the outstanding shares
+Calculate quarter-end aggregate market capitalization
+
+-Apply the rowSums command to the three market capitalization variables (8-10)
+```{r}
+weights$tot.mcap <- rowSums(weights[(ncol(weights)-3):ncol(weights)])
+weights
+
+```
+Calculate the quarter-end weights of each security in the portfolio
+
+Divide each security’s market cap by the combined market cap of the three securities
+```{r}
+weights$NVDA.wgt <- weights$NVDA.mcap/weights$tot.mcap
+weights$MSFT.wgt <- weights$MSFT.mcap/weights$tot.mcap
+weights$BRK_B.wgt <- weights$BRK_B.mcap/weights$tot.mcap
+weights$JPM.wgt <- weights$JPM.mcap/weights$tot.mcap
+weights
+
+
+WEIGHT <- weights[,c(1,(ncol(weights)-3):ncol(weights))]
+WEIGHT
+
+```
+Calculate the quarter-end weights of each security in the portfolio
+
+To apply the weights to the start of the following quarter, add one to all dates
+
+```{r}
+WEIGHT$date <- WEIGHT$date+1
+WEIGHT
+```
+Calculating the quarterly VW portfolio values (similar to EW portfolio)
+
+Create series of dates to find the applicable weights at the beginning of each quarter
+
+```{r}
+
+date <- seq(as.Date("2011-12-31"),as.Date("2012-12-31"),by=1)
+date <- data.frame(date)
+date[c(1:3,nrow(date)),]
+
+```
+```{r}
+vwret <- na.locf(merge(date,WEIGHT,by="date",all.x=TRUE))
+vwret[c(1:3,nrow(vwret)),] 
+```
+Check date as.date and wgt as.num
+```{r}
+str(vwret)
+
+```
+```{r}
+q1.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-01-01"))  ## 2012-01-02 was new years day holiday. 01/01 was Sunday
+q1.vw.wgt
+q2.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-04-01"))
+q2.vw.wgt
+q3.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-07-01"))
+q3.vw.wgt
+q4.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-10-01"))
+q4.vw.wgt
+
+```
+```{r}
+Q1.pie.values <- as.numeric(q1.vw.wgt[,-1])
+Q1.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+pct <- round(Q1.pie.values*100)
+Q1.pie.labels <- paste(Q1.pie.labels,pct) #Add pct
+Q1.pie.labels <- paste(Q1.pie.labels,"%",sep="") #Add % sign
+pie(Q1.pie.values,
+    labels=Q1.pie.labels,
+    col=c("red","blue","green","yellow"),
+    main="Q1 Value Weigthing")
+
+
+Q2.pie.values <- as.numeric(q2.vw.wgt[,-1])
+Q2.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+pct <- round(Q2.pie.values*100)
+Q2.pie.labels <- paste(Q2.pie.labels,pct) #Add pct
+Q2.pie.labels <- paste(Q2.pie.labels,"%",sep="") #Add % sign
+pie(Q2.pie.values,
+    labels=Q2.pie.labels,
+    col=c("red","blue","green","yellow"),
+    main="Q2 Value Weigthing")
+
+Q3.pie.values <- as.numeric(q3.vw.wgt[,-1])
+Q3.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+pct <- round(Q3.pie.values*100)
+Q3.pie.labels <- paste(Q3.pie.labels,pct) #Add pct
+Q3.pie.labels <- paste(Q3.pie.labels,"%",sep="") #Add % sign
+pie(Q3.pie.values,
+    labels=Q3.pie.labels,
+    col=c("red","blue","green","yellow"),
+    main="Q3 Value Weigthing")
+
+
+Q4.pie.values <- as.numeric(q4.vw.wgt[,-1])
+Q4.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+pct <- round(Q4.pie.values*100)
+Q4.pie.labels <- paste(Q4.pie.labels,pct) #Add pct
+Q4.pie.labels <- paste(Q4.pie.labels,"%",sep="") #Add % sign
+pie(Q4.pie.values,
+    labels=Q4.pie.labels,
+    col=c("red","blue","green","yellow"),
+    main="Q4 Value Weigthing")
+
+
+
+```
+Calculating VW portfolio values for 1Q 2012 (similar to the EW portfolio)
+
+Subset vwport to the data from Dec 31, 2011 to March 31, 2012
+
+```{r}
+
+vw.q1 <- subset(vwport[,c(1,6:9)], 
+                vwport$Date >= as.Date("2011-12-30") &
+                vwport$Date <= as.Date("2012-03-31"))
+names(vw.q1) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q1[c(1:3,nrow(vw.q1)),]
+
+
+vw.q1[1,2:ncol(vw.q1)] <-1  ### delete fisrt row because it lies in q4 of last year 
+vw.q1$NVDA <- cumprod(vw.q1$NVDA)
+vw.q1$MSFT <- cumprod(vw.q1$MSFT)
+vw.q1$BRK_B <- cumprod(vw.q1$BRK_B)
+vw.q1$JPM <- cumprod(vw.q1$JPM)
+vw.q1[c(1:3,nrow(vw.q1)),]
+
+
+vw.q1$NVDA.idx <- (1*q1.vw.wgt$NVDA.wgt)*vw.q1$NVDA
+vw.q1$MSFT.idx <- (1*q1.vw.wgt$MSFT.wgt)*vw.q1$MSFT
+vw.q1$BRK_B.idx <- (1*q1.vw.wgt$BRK_B.wgt)*vw.q1$BRK_B
+vw.q1$JPM.idx <- (1*q1.vw.wgt$JPM.wgt)*vw.q1$JPM
+vw.q1[c(1:3,nrow(vw.q1)),]
+
+
+
+q1.vw.val <- data.frame(rowSums(vw.q1[,(ncol(vw.q1)-3):ncol(vw.q1)]))
+q1.vw.val[c(1:3,nrow(q1.vw.val)),]
+
+names(q1.vw.val) <- paste("port.val")
+q1.vw.val$date <- vw.q1$date
+q1.vw.val[c(1:3,nrow(q1.vw.val)),]
+
+
+
+q2.vw.inv <- q1.vw.val[nrow(q1.vw.val),1]
+q2.vw.inv
+```
+
+
+Subset vwport to the data from Mar 2012 to Jun 2012
+
+
+```{r}
+
+vw.q2<- subset(vwport[,c(1,6:9)], 
+                vwport$Date >= as.Date("2012-04-01") &
+                vwport$Date <= as.Date("2012-06-30"))
+names(vw.q2) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q2[c(1:3,nrow(vw.q2)),]
+
+
+# vw.q2[1,2:ncol(vw.q2)] <-1     
+vw.q2$NVDA <- cumprod(vw.q2$NVDA)
+vw.q2$MSFT <- cumprod(vw.q2$MSFT)
+vw.q2$BRK_B <- cumprod(vw.q2$BRK_B)
+vw.q2$JPM <- cumprod(vw.q2$JPM)
+vw.q2[c(1:3,nrow(vw.q2)),]
+
+
+vw.q2$NVDA.idx <- (1*q2.vw.wgt$NVDA.wgt)*vw.q2$NVDA
+vw.q2$MSFT.idx <- (1*q2.vw.wgt$MSFT.wgt)*vw.q2$MSFT
+vw.q2$BRK_B.idx <- (1*q2.vw.wgt$BRK_B.wgt)*vw.q2$BRK_B
+vw.q2$JPM.idx <- (1*q2.vw.wgt$JPM.wgt)*vw.q2$JPM
+vw.q2[c(1:3,nrow(vw.q2)),]
+
+
+
+q2.vw.val <- data.frame(rowSums(vw.q2[,(ncol(vw.q2)-3):ncol(vw.q2)]))
+q2.vw.val[c(1:3,nrow(q2.vw.val)),]
+
+names(q2.vw.val) <- paste("port.val")
+q2.vw.val$date <- vw.q2$date
+q2.vw.val[c(1:3,nrow(q2.vw.val)),]
+
+
+
+q2.vw.inv <- q2.vw.val[nrow(q2.vw.val),1]
+q2.vw.inv
+```
+
+Subset vwport to the data from Jul 2012 to Sep 2012
+
+
+```{r}
+
+vw.q3<- subset(vwport[,c(1,6:9)], 
+                vwport$Date >= as.Date("2012-07-01") &
+                vwport$Date <= as.Date("2012-09-30"))
+names(vw.q3) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q3[c(1:3,nrow(vw.q3)),]
+
+
+# vw.q3[1,2:ncol(vw.q3)] <-1 
+vw.q3$NVDA <- cumprod(vw.q3$NVDA)
+vw.q3$MSFT <- cumprod(vw.q3$MSFT)
+vw.q3$BRK_B <- cumprod(vw.q3$BRK_B)
+vw.q3$JPM <- cumprod(vw.q3$JPM)
+vw.q3[c(1:3,nrow(vw.q3)),]
+
+
+vw.q3$NVDA.idx <- (1*q3.vw.wgt$NVDA.wgt)*vw.q3$NVDA
+vw.q3$MSFT.idx <- (1*q3.vw.wgt$MSFT.wgt)*vw.q3$MSFT
+vw.q3$BRK_B.idx <- (1*q3.vw.wgt$BRK_B.wgt)*vw.q3$BRK_B
+vw.q3$JPM.idx <- (1*q3.vw.wgt$JPM.wgt)*vw.q3$JPM
+vw.q3[c(1:3,nrow(vw.q3)),]
+
+
+
+q3.vw.val <- data.frame(rowSums(vw.q3[,(ncol(vw.q3)-3):ncol(vw.q3)]))
+q3.vw.val[c(1:3,nrow(q3.vw.val)),]
+
+names(q3.vw.val) <- paste("port.val")
+q3.vw.val$date <- vw.q3$date
+q3.vw.val[c(1:3,nrow(q3.vw.val)),]
+
+
+
+q3.vw.inv <- q3.vw.val[nrow(q3.vw.val),1]
+q3.vw.inv
+```
+
+Subset vwport to the data from Oct 2012 to Dec 2012
+
+
+```{r}
+
+vw.q4<- subset(vwport[,c(1,6:9)], 
+                vwport$Date >= as.Date("2012-10-01") &
+                vwport$Date <= as.Date("2012-12-31"))
+names(vw.q4) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q4[c(1:3,nrow(vw.q4)),]
+
+
+# vw.q4[1,2:ncol(vw.q4)] <-1 
+vw.q4$NVDA <- cumprod(vw.q4$NVDA)
+vw.q4$MSFT <- cumprod(vw.q4$MSFT)
+vw.q4$BRK_B <- cumprod(vw.q4$BRK_B)
+vw.q4$JPM <- cumprod(vw.q4$JPM)
+vw.q4[c(1:3,nrow(vw.q4)),]
+
+
+vw.q4$NVDA.idx <- (1*q4.vw.wgt$NVDA.wgt)*vw.q4$NVDA
+vw.q4$MSFT.idx <- (1*q4.vw.wgt$MSFT.wgt)*vw.q4$MSFT
+vw.q4$BRK_B.idx <- (1*q4.vw.wgt$BRK_B.wgt)*vw.q4$BRK_B
+vw.q4$JPM.idx <- (1*q4.vw.wgt$JPM.wgt)*vw.q4$JPM
+vw.q4[c(1:3,nrow(vw.q4)),]
+
+
+
+q4.vw.val <- data.frame(rowSums(vw.q4[,(ncol(vw.q4)-3):ncol(vw.q4)]))
+q4.vw.val[c(1:3,nrow(q4.vw.val)),]
+
+names(q4.vw.val) <- paste("port.val")
+q4.vw.val$date <- vw.q4$date
+q4.vw.val[c(1:3,nrow(q4.vw.val)),]
+
+
+
+q4.vw.inv <- q4.vw.val[nrow(q4.vw.val),1]
+q4.vw.inv
+```
+
+Combining: 
+
+```{r}
+vw.portval <- rbind(q1.vw.val,q2.vw.val,q3.vw.val,q4.vw.val)
+vw.portval[c(1:3,nrow(vw.portval)),]
+
+```
+
+
+```{r}
+port.val <- merge(vw.portval,ew.portval,by="date")
+names(port.val) <- paste(c("date","VW.cum","EW.cum"))
+port.val[c(1:3,nrow(port.val)),]
+
+```
+
+```{r}
+y.range <-range(port.val[,2:3])
+plot(port.val$EW.cum,
+     type="l",
+     xlab="Date",
+     ylab="Value of Investment",
+     ylim=y.range,
+     lty=1,
+     main="Value of $1 Investment in Equal-Weighted and Value-Weighted Portfolios of \n NVDA,MSFT,BRK_B and JPM \n December 301, 2011 - December 31, 2012")
+lines(port.val$VW.cum,lty=2)
+abline(h=1,lty=1)
+legend("topright",
+       c("Equal-Weighted Portfolio","Value-Weighted Portfolio"),
+       lty=c(1,2))
+
+
+```
+Saving benchmark portfolio returns into a CSV file
+```{r}
+port.xts <-xts(port.val[,2:3],order.by=port.val[,1])
+
+port.xts$Lag.VW <- Lag(port.xts$VW.cum,k=1)
+port.xts$Lag.EW <- Lag(port.xts$EW.cum,k=1)
+
+port.xts$VW.ret <- port.xts$VW.cum/port.xts$Lag.VW-1
+port.xts$EW.ret <- port.xts$EW.cum/port.xts$Lag.EW-1
+
+Port.Ret <- port.xts[,c(1,2,5,6)]
+Port.Ret[c(1:3,nrow(Port.Ret)),]
+
+
+```
+
+
+```{r}
+csv.port <- cbind(data.frame(index(Port.Ret)),data.frame(Port.Ret))
+names(csv.port)[1]<- paste("date")
+csv.port[c(1:3,nrow(csv.port)),]
+
+```
+
+
+```{r}
+rownames(csv.port) <- seq(1:nrow(csv.port))
+csv.port[c(1:3,nrow(csv.port)),]
+
+```
+
+
+```{r}
+write.csv(csv.port,"Hypothetical Portfolio (Daily).csv")
+```
+
+
+References: <br>
+
+[1] Module 1 importing data <br>
+
+[2] Module 2 individual returns <br>
+
+[3] Module 3 portfolio returns<br>
+
+[4] Stackoverflow - for errors associated with Rstudio<br>
+
+[5] ChatGPT - for code troubleshooting<br>

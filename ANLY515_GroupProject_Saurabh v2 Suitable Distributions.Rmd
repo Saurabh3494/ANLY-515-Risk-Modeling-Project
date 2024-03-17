@@ -1,0 +1,2266 @@
+---
+title: "ANLY515 Group Project Saurabh v2"
+author: "Saurabh Shirish Prabhu"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls()) 
+knitr::opts_chunk$set(echo = TRUE)
+dir.create(tempdir())
+```
+
+Importing data from Yahoo finance:
+
+```{r}
+getwd()
+setwd('F:/a_Harrisburg_University_Academics/ANLY 515-51- A-2024Spring - Risk Modeling and Assessment/Final Project/Code')
+getwd()
+```
+
+
+This section contains suitable distribution for portfolios.
+
+
+Select two market sectors from the 11 sectors identified on this
+reference o <https://www.bloomberg.com/markets/sectors>
+
+Answer:
+
+[1]Information Technology<br>
+
+1.1 Semiconductors & Semiconductor Equipment: NVIDIA Corporation (NVDA)<br>
+1.2 Software & Services: Microsoft Corporation (MSFT)<br>
+1.3 Software & Services: Apple Inc. (AAPL)<br>
+1.4 Software & Services: Netflix Inc. (NFLX)<br>
+
+
+[2]Financials<br>
+
+2.1 Insurance: Berkshire Hathaway Inc. (BRK.B)<br>
+2.2 Banks: JPMorgan Chase & Co. (JPM)<br>
+2.3 Banks: CitiGroup Inc. (C)<br>
+2.4 Insurance: BlackRock Inc. (BLK)<br>
+
+
+
+[3]Consumer Discretionary:<br>
+
+3.1 Retailing: McDonald's Corporation (MCD)<br>
+3.2 Consumer Durables & Apparel: Skechers U.S.A., Inc. (SKX)<br>
+3.3 Retailing: Starbucks Corp. (SBUX) <br>
+3.4 Consumer Durables & Apparel: Nike Inc. (NKE)
+
+
+
+[4]Industrials: <br>
+
+4.1 Capital Goods: Cummins Inc. (CMI)<br>
+4.2 Capital Goods:Deere & Company (DE)<br>
+
+
+References: <br>
+[1]<https://stockanalysis.com/stocks/industry/><br>
+[2]<https://medium.com/\@sil.soham/importing-and-visualising-stock-market-data-in-r-ac5a22e23cd><br>
+
+
+Import all necessary libraries
+
+```{r}
+library(quantmod)
+library(xts)
+library(dplyr)
+library(corrplot)
+```
+
+Students should have a five-year portfolio. The calculations for this homework will be based on the data from the third year of your portfolio.
+
+• Identify the five-year period of your portfolio
+
+a) Identify the period for this homework
+
+• Use only 4 stocks from your portfolio
+
+
+
+Part A – Individual Security Returns
+1. Calculate Returns
+
+a) Calculate portfolio price returns for the homework period
+
+
+2. Dividend reinvestment strategy
+
+a) Calculate portfolio total gross returns for the homework period
+
+b) Calculate portfolio logarithmic gross returns for the homework period
+
+c) Are the results the same?
+
+
+3. Plot a comparison of Total Price returns and Total Gross returns
+
+
+
+Part B – Portfolio Returns
+
+Use the same investment period and the same stocks
+
+1. Create an equally-weighted portfolio (rebalance each quarter)
+
+2. Create a value-weighted portfolio (rebalance each quarter)
+
+a. Create weight pie charts for each quarter
+
+3. Plot a comparison between the EW and the VW portfolio
+
+
+
+```{r}
+
+start <- as.Date("2014-12-31",format="%Y-%m-%d")
+end <- as.Date("2023-12-31",format="%Y-%m-%d")
+
+# Use getSymbols to retrieve the data
+
+# [1]Information Technology
+data.NVDA <- getSymbols("NVDA", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.MSFT <- getSymbols("MSFT", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.AAPL <- getSymbols("AAPL", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NFLX <- getSymbols("NFLX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [2]Financials
+data.BRK_B <- getSymbols("BRK-B", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.JPM <- getSymbols("JPM", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.C <- getSymbols("C", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.BLK <- getSymbols("BLK", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [3]Consumer Discretionary:
+data.MCD <- getSymbols("MCD", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SKX <- getSymbols("SKX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SBUX <- getSymbols("SBUX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NKE <- getSymbols("NKE", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+# Assign the class "xts" and "zoo" explicitly
+# class(data.NVDA) <- c("xts", "zoo")
+# Print the class of the assigned variable
+class(data.NVDA)
+
+
+```
+
+Plot the data for each security to check for missing data<br>
+
+• Confirm that there is no missing data<br> 
+• Check the dimensions to
+verify that the data covers 5 years<br>
+
+```{r}
+names(data.BRK_B)
+names(data.BRK_B) <- paste(c("BRK_B.Open","BRK_B.High","BRK_B.Low","BRK_B.Close","BRK_B.Volume","BRK_B.Adjusted"))
+names(data.BRK_B)
+```
+
+```{r}
+
+## Information Technology
+par(mfrow = c(2, 2))  # Set up a 2x2 grid layout
+plot(data.NVDA$NVDA.Adjusted, main="NVDA")
+plot(data.MSFT$MSFT.Adjusted, main="MSFT")
+plot(data.AAPL$AAPL.Adjusted, main="AAPL")
+plot(data.NFLX$NFLX.Adjusted, main="NFLX")
+
+
+## Financials
+par(mfrow = c(2, 2))  # Set up a 2x2 grid layout
+plot(data.BRK_B$BRK_B.Adjusted, main="BRK_B")
+plot(data.JPM$JPM.Adjusted, main="JPM")
+plot(data.C$C.Adjusted, main="C")
+plot(data.BLK$BLK.Adjusted, main="BLK")
+
+
+## Consumer Discretionary
+par(mfrow = c(2, 2))  # Set up a 2x2 grid layout
+plot(data.MCD$MCD.Adjusted, main="MCD")
+plot(data.SKX$SKX.Adjusted, main="SKX")
+plot(data.SBUX$SBUX.Adjusted, main="SBUX")
+plot(data.NKE$NKE.Adjusted, main="NKE")
+
+```
+
+```{r}
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Adjusted.Prices <- data.NVDA$NVDA.Adjusted
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.MSFT$MSFT.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.AAPL$AAPL.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.NFLX$NFLX.Adjusted)
+# Infotech.Adjusted.Prices[c(1:3,nrow(Infotech.Adjusted.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Adjusted.Prices <- data.BRK_B$BRK_B.Adjusted
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.JPM$JPM.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.C$C.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.BLK$BLK.Adjusted)
+# Financials.Adjusted.Prices[c(1:3,nrow(Financials.Adjusted.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Adjusted.Prices <- data.MCD$MCD.Adjusted
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SKX$SKX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SBUX$SBUX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.NKE$NKE.Adjusted)
+# Consumer.Adjusted.Prices[c(1:3,nrow(Consumer.Adjusted.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.totret.all <- cbind(Infotech.Adjusted.Prices,Financials.Adjusted.Prices,Consumer.Adjusted.Prices)
+Portfolio.totret.all[c(1:3,nrow(Portfolio.totret.all)),]
+
+str(Portfolio.totret.all)
+summary(Portfolio.totret.all)
+```
+
+
+
+Variance covariance matrix: 
+
+Part A – Risks
+1. Using two securities from your portfolio (from different sectors)
+a) Construct a variance-covariance matrix
+
+```{r}
+
+multi <- Portfolio.totret.all
+
+mat.price <- matrix(multi,nrow(multi))
+prc2ret <- function(x) Delt(x)
+
+
+mat.ret <- apply(mat.price,2,function(x) {prc2ret(c(x))})
+mat.ret[c(1:2,nrow(mat.ret)),]
+
+
+mat.ret <- mat.ret[-1,]
+colnames(mat.ret) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+# mat.ret[1:4,]
+
+
+# Create a vector of weights AMZN: 25% IBM: 75%
+
+WGT.12asset <- rep(1/12, 12)   ###EQUALLY WEIGHTED
+WGT.12asset <- matrix(WGT.12asset,1)
+# WGT.12asset
+# Create a transposed vector of weights (command: t)
+
+tWGT.12asset <- t(WGT.12asset)
+tWGT.12asset
+
+
+## Calculate annualize and annualize variance-covariance matrix
+VCOV <- cov(mat.ret)
+VCOV.annual <- nrow(mat.ret)*VCOV   ## 252 is nrow of mat.ret 
+VCOV.annual
+
+# Check the range of values in the covariance matrix
+min_value <- min(VCOV.annual)
+max_value <- max(VCOV.annual)
+
+
+# Convert covariance matrix to correlation matrix
+COR.annual <- cov2cor(VCOV.annual)
+corrplot(COR.annual, method = "circle")
+```
+Part B – Suitable distributions for returns 
+1. Fit the data using GHD, HYP and NIG 
+2. Plot the combined density functions 
+3. Create a Q-Q plot 
+4. Make a model recommendation using lik.ratio.test 
+5. Calculate and plot the VaR (using all models) 
+6. Calculate and plot the ES (using all models)
+
+```{r}
+library(fBasics)
+library(GeneralizedHyperbolic)
+library(FRAPO)
+library(ghyp)
+library(cccp)
+library(Rglpk)
+library(slam)
+
+```
+```{r}
+set.seed(10)
+ghypsim<-rghyp(1500)
+head(ghypsim)
+
+
+# Generate datasets using hyperbolic, normal and normal inverse Gaussian simulations
+hypsim<-rhyp(1500)
+normsim<-rnorm(1500)
+nigsim<-rnig(1500)
+
+```
+Check data
+
+```{r}
+summary(ghypsim)
+summary(hypsim)
+summary(nigsim)
+summary(normsim)
+
+
+par(mfrow=c(2,2))
+hist(nigsim, breaks = 50, col = "yellow", xlim = c(-10,10),ylim = c(0,150))
+hist(ghypsim, breaks=50, col="red", xlim=c(-10,10), ylim = c(0,150))
+hist(hypsim, breaks=50, col="green", xlim=c(-10,10),ylim = c(0,250))
+hist(normsim, breaks=50, col="blue", xlim=c(-10,10),ylim = c(0,150))
+box()
+```
+
+### Portfolio - 2013 total returns ###
+
+```{r}
+period.ret <- Portfolio.totret.all[c(1,nrow(Portfolio.totret.all)),]
+# period.ret
+rets <- lapply(period.ret,Delt)
+# rets  
+rets <- data.frame(rets)
+# rets
+
+
+rets <- rets[2,]*100
+names(rets) <- paste(c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      ))
+rets
+
+```
+
+
+
+Calculate return time series 
+
+```{r}
+port.df <- data.frame(Date = index(Portfolio.totret.all), coredata(Portfolio.totret.all))
+port.df[c(1:3,nrow(port.df)),]
+
+
+Port.rets <-port.df
+date<-Port.rets$date
+str(date)
+
+PortRet.price <- Port.rets[,-1]
+
+
+attr(PortRet.price, 'time')<-date   ##add time attribute to dataset
+str(PortRet.price)
+
+
+Port.rets.5yrs<-returnseries(PortRet.price)
+# summary(PortRet_2013)
+# str(PortRet_2013)
+# head(PortRet_2013)
+attr(Port.rets.5yrs, 'time')<-date
+str(Port.rets.5yrs)
+head(Port.rets.5yrs)
+```
+
+```{r}
+datets<-as.character(date)
+PortTimeS<-timeSeries(Port.rets.5yrs, charvec = datets)
+str(PortTimeS)
+head(PortTimeS)
+```
+### NVDA ###
+
+
+```{r}
+
+datets <-as.character(datets)
+PortTimeS_NVDA<-timeSeries(PortTimeS$NVDA.Adjusted, charvec = datets)
+
+attr(PortTimeS_NVDA, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_NVDA)
+
+head(PortTimeS_NVDA)
+
+
+ef_NVDA<-density(PortTimeS_NVDA, na.rm=TRUE)
+plot(ef_NVDA)
+
+### Fit distributions
+ghdfit_NVDA<- fit.ghypuv(PortTimeS_NVDA, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_NVDA<- fit.hypuv(PortTimeS_NVDA, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_NVDA<- fit.NIGuv(PortTimeS_NVDA, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_NVDA <- dghyp(ef_NVDA$x, ghdfit_NVDA)
+hypdens_NVDA <- dghyp(ef_NVDA$x, hypfit_NVDA)
+nigdens_NVDA <- dghyp(ef_NVDA$x, nigfit_NVDA)
+nordens_NVDA <- dnorm(ef_NVDA$x, mean = mean(PortTimeS_NVDA, na.rm=TRUE), sd = sd(c(PortTimeS_NVDA[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_NVDA, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.4),lwd=2)
+lines(ef_NVDA$x, ghddens_NVDA, col = "red",lwd=2)
+lines(ef_NVDA$x, hypdens_NVDA, col = "blue",lwd=2)
+lines(ef_NVDA$x, nigdens_NVDA, col = "green",lwd=2)
+lines(ef_NVDA$x, nordens_NVDA, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+
+# Q-Q plot NVDA
+
+
+qqghyp(ghdfit_NVDA, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.8)
+qqghyp(hypfit_NVDA, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_NVDA, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_NVDA <- stepAIC.ghyp(PortTimeS_NVDA, control = list(maxit = 1000), silent = TRUE)
+head(AIC_NVDA$fit.table)
+AIC_NVDA$best.model
+
+AIC_NVDA$best.model
+
+LRghdnig_NVDA <- lik.ratio.test(ghdfit_NVDA, nigfit_NVDA)
+LRghdnig_NVDA    ##if TRUE there is no relationship between the data sets
+LRghdhyp_NVDA <- lik.ratio.test(ghdfit_NVDA, hypfit_NVDA)
+LRghdhyp_NVDA    ##if FASLE there is a relationship between the data sets
+
+
+```
+```{r}
+# Probabilities & VaR calculation (using quantiles)
+
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_NVDA <- abs(qghyp(p, ghdfit_NVDA))
+hyp.VaR_NVDA <- abs(qghyp(p, hypfit_NVDA))
+nig.VaR_NVDA <- abs(qghyp(p, nigfit_NVDA))
+nor.VaR_NVDA <- abs(qnorm(p, mean = mean(PortTimeS_NVDA, na.rm=TRUE), sd = sd(c(PortTimeS_NVDA[, 1]), na.rm = TRUE))) 
+emp.VaR_NVDA <- abs(quantile(x = PortTimeS_NVDA, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_NVDA, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="NVDA \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_NVDA, nig.VaR_NVDA, ghd.VaR_NVDA, nor.VaR_NVDA, emp.VaR_NVDA)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_NVDA), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_NVDA, ghd.VaR_NVDA, hyp.VaR_NVDA,
+                          nig.VaR_NVDA, nor.VaR_NVDA)))
+lines(seq(along = p), ghd.VaR_NVDA, col = "red")
+lines(seq(along = p), hyp.VaR_NVDA, col = "blue")
+lines(seq(along = p), nig.VaR_NVDA, col = "green")
+lines(seq(along = p), nor.VaR_NVDA, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_NVDA <- abs(ESghyp(p, ghdfit_NVDA))
+hyp.ES_NVDA <- abs(ESghyp(p, hypfit_NVDA))
+nig.ES_NVDA <- abs(ESghyp(p, nigfit_NVDA))
+nor.ES_NVDA <- abs(mean(PortTimeS_NVDA, na.rm=TRUE) - sd(c(PortTimeS_NVDA[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_NVDA <- ceiling(p * length(PortTimeS_NVDA))
+emp.ES_NVDA <- sapply(obs.p_NVDA, function(x) abs(mean(sort(c(PortTimeS_NVDA))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_NVDA, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "NVDA \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_NVDA, nig.ES_NVDA, ghd.ES_NVDA, nor.ES_NVDA, emp.ES_NVDA), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_NVDA), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_NVDA, ghd.ES_NVDA, hyp.ES_NVDA, nig.ES_NVDA, nor.ES_NVDA)))
+lines(1:length(p), ghd.ES_NVDA, col = "red")
+lines(1:length(p), hyp.ES_NVDA, col = "blue")
+lines(1:length(p), nig.ES_NVDA, col = "green")
+lines(1:length(p), nor.ES_NVDA, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+y <- timeSeries(PortTimeS$NVDA.Adjusted, charvec = datets)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) {
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="NVDA",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+### MSFT ###
+
+
+```{r}
+
+datets <-as.character(datets)
+PortTimeS_MSFT<-timeSeries(PortTimeS$MSFT.Adjusted, charvec = datets)
+
+attr(PortTimeS_MSFT, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_MSFT)
+
+head(PortTimeS_MSFT)
+
+
+ef_MSFT<-density(PortTimeS_MSFT, na.rm=TRUE)
+plot(ef_MSFT)
+
+
+
+ghdfit_MSFT<- fit.ghypuv(PortTimeS_MSFT, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_MSFT<- fit.hypuv(PortTimeS_MSFT, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_MSFT<- fit.NIGuv(PortTimeS_MSFT, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_MSFT <- dghyp(ef_MSFT$x, ghdfit_MSFT)
+hypdens_MSFT <- dghyp(ef_MSFT$x, hypfit_MSFT)
+nigdens_MSFT <- dghyp(ef_MSFT$x, nigfit_MSFT)
+nordens_MSFT <- dnorm(ef_MSFT$x, mean = mean(PortTimeS_MSFT, na.rm=TRUE), sd = sd(c(PortTimeS_MSFT[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_MSFT, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.4),lwd=2)
+lines(ef_MSFT$x, ghddens_MSFT, col = "red",lwd=2)
+lines(ef_MSFT$x, hypdens_MSFT, col = "blue",lwd=2)
+lines(ef_MSFT$x, nigdens_MSFT, col = "green",lwd=2)
+lines(ef_MSFT$x, nordens_MSFT, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+
+# Q-Q plot MSFT
+
+qqghyp(ghdfit_MSFT, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.8)
+qqghyp(hypfit_MSFT, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_MSFT, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_MSFT <- stepAIC.ghyp(PortTimeS_MSFT, control = list(maxit = 1000), silent = TRUE)
+head(AIC_MSFT$fit.table)
+AIC_MSFT$best.model
+
+AIC_MSFT$best.model
+
+LRghdnig_MSFT <- lik.ratio.test(ghdfit_MSFT, nigfit_MSFT)
+LRghdnig_MSFT    ##if TRUE there is no relationship between the data sets
+LRghdhyp_MSFT <- lik.ratio.test(ghdfit_MSFT, hypfit_MSFT)
+LRghdhyp_MSFT    ##if FASLE there is a relationship between the data sets
+
+```
+
+Probabilities & VaR calculation (using quantiles)
+```{R}
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_MSFT <- abs(qghyp(p, ghdfit_MSFT))
+hyp.VaR_MSFT <- abs(qghyp(p, hypfit_MSFT))
+nig.VaR_MSFT <- abs(qghyp(p, nigfit_MSFT))
+nor.VaR_MSFT <- abs(qnorm(p, mean = mean(PortTimeS_MSFT, na.rm=TRUE), sd = sd(c(PortTimeS_MSFT[, 1]), na.rm = TRUE))) 
+emp.VaR_MSFT <- abs(quantile(x = PortTimeS_MSFT, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_MSFT, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="MSFT \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_MSFT, nig.VaR_MSFT, ghd.VaR_MSFT, nor.VaR_MSFT, emp.VaR_MSFT)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_MSFT), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_MSFT, ghd.VaR_MSFT, hyp.VaR_MSFT,
+                          nig.VaR_MSFT, nor.VaR_MSFT)))
+lines(seq(along = p), ghd.VaR_MSFT, col = "red")
+lines(seq(along = p), hyp.VaR_MSFT, col = "blue")
+lines(seq(along = p), nig.VaR_MSFT, col = "green")
+lines(seq(along = p), nor.VaR_MSFT, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_MSFT <- abs(ESghyp(p, ghdfit_MSFT))
+hyp.ES_MSFT <- abs(ESghyp(p, hypfit_MSFT))
+nig.ES_MSFT <- abs(ESghyp(p, nigfit_MSFT))
+nor.ES_MSFT <- abs(mean(PortTimeS_MSFT, na.rm=TRUE) - sd(c(PortTimeS_MSFT[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_MSFT <- ceiling(p * length(PortTimeS_MSFT))
+emp.ES_MSFT <- sapply(obs.p_MSFT, function(x) abs(mean(sort(c(PortTimeS_MSFT))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_MSFT, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "MSFT \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_MSFT, nig.ES_MSFT, ghd.ES_MSFT, nor.ES_MSFT, emp.ES_MSFT), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_MSFT), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_MSFT, ghd.ES_MSFT, hyp.ES_MSFT, nig.ES_MSFT, nor.ES_MSFT)))
+lines(1:length(p), ghd.ES_MSFT, col = "red")
+lines(1:length(p), hyp.ES_MSFT, col = "blue")
+lines(1:length(p), nig.ES_MSFT, col = "green")
+lines(1:length(p), nor.ES_MSFT, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+y <- timeSeries(PortTimeS$MSFT.Adjusted, charvec = datets)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) {
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="MSFT",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+
+
+### AAPL ###
+
+
+```{r}
+
+datets <-as.character(datets)
+PortTimeS_AAPL<-timeSeries(PortTimeS$AAPL.Adjusted, charvec = datets)
+
+attr(PortTimeS_AAPL, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_AAPL)
+
+head(PortTimeS_AAPL)
+
+
+ef_AAPL<-density(PortTimeS_AAPL, na.rm=TRUE)
+plot(ef_AAPL)
+
+
+ghdfit_AAPL<- fit.ghypuv(PortTimeS_AAPL, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_AAPL<- fit.hypuv(PortTimeS_AAPL, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_AAPL<- fit.NIGuv(PortTimeS_AAPL, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_AAPL <- dghyp(ef_AAPL$x, ghdfit_AAPL)
+hypdens_AAPL <- dghyp(ef_AAPL$x, hypfit_AAPL)
+nigdens_AAPL <- dghyp(ef_AAPL$x, nigfit_AAPL)
+nordens_AAPL <- dnorm(ef_AAPL$x, mean = mean(PortTimeS_AAPL, na.rm=TRUE), sd = sd(c(PortTimeS_AAPL[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_AAPL, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.4),lwd=2)
+lines(ef_AAPL$x, ghddens_AAPL, col = "red",lwd=3)
+lines(ef_AAPL$x, hypdens_AAPL, col = "blue",lwd=2)
+lines(ef_AAPL$x, nigdens_AAPL, col = "green",lwd=2)
+lines(ef_AAPL$x, nordens_AAPL, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+# Q-Q plot AAPL
+
+
+qqghyp(ghdfit_AAPL, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.9)
+qqghyp(hypfit_AAPL, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_AAPL, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_AAPL <- stepAIC.ghyp(PortTimeS_AAPL, control = list(maxit = 1000), silent = TRUE)
+head(AIC_AAPL$fit.table)
+AIC_AAPL$best.model
+
+AIC_AAPL$best.model
+
+LRghdnig_AAPL <- lik.ratio.test(ghdfit_AAPL, nigfit_AAPL)
+LRghdnig_AAPL    ##if TRUE there is no relationship between the data sets
+LRghdhyp_AAPL <- lik.ratio.test(ghdfit_AAPL, hypfit_AAPL)
+LRghdhyp_AAPL    ##if FASLE there is a relationship between the data sets
+
+```
+
+Probabilities & VaR calculation (using quantiles)
+```{r}
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_AAPL <- abs(qghyp(p, ghdfit_AAPL))
+hyp.VaR_AAPL <- abs(qghyp(p, hypfit_AAPL))
+nig.VaR_AAPL <- abs(qghyp(p, nigfit_AAPL))
+nor.VaR_AAPL <- abs(qnorm(p, mean = mean(PortTimeS_AAPL, na.rm=TRUE), sd = sd(c(PortTimeS_AAPL[, 1]), na.rm = TRUE))) 
+emp.VaR_AAPL <- abs(quantile(x = PortTimeS_AAPL, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_AAPL, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="AAPL \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_AAPL, nig.VaR_AAPL, ghd.VaR_AAPL, nor.VaR_AAPL, emp.VaR_AAPL)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_AAPL), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_AAPL, ghd.VaR_AAPL, hyp.VaR_AAPL,
+                          nig.VaR_AAPL, nor.VaR_AAPL)))
+lines(seq(along = p), ghd.VaR_AAPL, col = "red")
+lines(seq(along = p), hyp.VaR_AAPL, col = "blue")
+lines(seq(along = p), nig.VaR_AAPL, col = "green")
+lines(seq(along = p), nor.VaR_AAPL, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_AAPL <- abs(ESghyp(p, ghdfit_AAPL))
+hyp.ES_AAPL <- abs(ESghyp(p, hypfit_AAPL))
+nig.ES_AAPL <- abs(ESghyp(p, nigfit_AAPL))
+nor.ES_AAPL <- abs(mean(PortTimeS_AAPL, na.rm=TRUE) - sd(c(PortTimeS_AAPL[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_AAPL <- ceiling(p * length(PortTimeS_AAPL))
+emp.ES_AAPL <- sapply(obs.p_AAPL, function(x) abs(mean(sort(c(PortTimeS_AAPL))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_AAPL, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "AAPL \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_AAPL, nig.ES_AAPL, ghd.ES_AAPL, nor.ES_AAPL, emp.ES_AAPL), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_AAPL), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_AAPL, ghd.ES_AAPL, hyp.ES_AAPL, nig.ES_AAPL, nor.ES_AAPL)))
+lines(1:length(p), ghd.ES_AAPL, col = "red")
+lines(1:length(p), hyp.ES_AAPL, col = "blue")
+lines(1:length(p), nig.ES_AAPL, col = "green")
+lines(1:length(p), nor.ES_AAPL, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+y <- timeSeries(PortTimeS$AAPL.Adjusted, charvec = datets)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) {
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="AAPL",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+
+
+### NFLX ###
+
+
+```{r}
+
+datets <-as.character(datets)
+PortTimeS_NFLX<-timeSeries(PortTimeS$NFLX.Adjusted, charvec = datets)
+
+attr(PortTimeS_NFLX, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_NFLX)
+
+head(PortTimeS_NFLX)
+
+
+ef_NFLX<-density(PortTimeS_NFLX, na.rm=TRUE)
+plot(ef_NFLX)
+
+
+ghdfit_NFLX<- fit.ghypuv(PortTimeS_NFLX, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_NFLX<- fit.hypuv(PortTimeS_NFLX, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_NFLX<- fit.NIGuv(PortTimeS_NFLX, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_NFLX <- dghyp(ef_NFLX$x, ghdfit_NFLX)
+hypdens_NFLX <- dghyp(ef_NFLX$x, hypfit_NFLX)
+nigdens_NFLX <- dghyp(ef_NFLX$x, nigfit_NFLX)
+nordens_NFLX <- dnorm(ef_NFLX$x, mean = mean(PortTimeS_NFLX, na.rm=TRUE), sd = sd(c(PortTimeS_NFLX[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_NFLX, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.4),lwd=2)
+lines(ef_NFLX$x, ghddens_NFLX, col = "red",lwd=3)
+lines(ef_NFLX$x, hypdens_NFLX, col = "blue",lwd=2)
+lines(ef_NFLX$x, nigdens_NFLX, col = "green",lwd=2)
+lines(ef_NFLX$x, nordens_NFLX, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+# Q-Q plot NFLX
+
+
+qqghyp(ghdfit_NFLX, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.9)
+qqghyp(hypfit_NFLX, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_NFLX, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_NFLX <- stepAIC.ghyp(PortTimeS_NFLX, control = list(maxit = 1000), silent = TRUE)
+head(AIC_NFLX$fit.table)
+AIC_NFLX$best.model
+
+AIC_NFLX$best.model
+
+LRghdnig_NFLX <- lik.ratio.test(ghdfit_NFLX, nigfit_NFLX)
+LRghdnig_NFLX    ##if TRUE there is no relationship between the data sets
+LRghdhyp_NFLX <- lik.ratio.test(ghdfit_NFLX, hypfit_NFLX)
+LRghdhyp_NFLX    ##if FASLE there is a relationship between the data sets
+
+```
+
+Probabilities & VaR calculation (using quantiles)
+```{r}
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_NFLX <- abs(qghyp(p, ghdfit_NFLX))
+hyp.VaR_NFLX <- abs(qghyp(p, hypfit_NFLX))
+nig.VaR_NFLX <- abs(qghyp(p, nigfit_NFLX))
+nor.VaR_NFLX <- abs(qnorm(p, mean = mean(PortTimeS_NFLX, na.rm=TRUE), sd = sd(c(PortTimeS_NFLX[, 1]), na.rm = TRUE))) 
+emp.VaR_NFLX <- abs(quantile(x = PortTimeS_NFLX, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_NFLX, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="NFLX \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_NFLX, nig.VaR_NFLX, ghd.VaR_NFLX, nor.VaR_NFLX, emp.VaR_NFLX)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_NFLX), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_NFLX, ghd.VaR_NFLX, hyp.VaR_NFLX,
+                          nig.VaR_NFLX, nor.VaR_NFLX)))
+lines(seq(along = p), ghd.VaR_NFLX, col = "red")
+lines(seq(along = p), hyp.VaR_NFLX, col = "blue")
+lines(seq(along = p), nig.VaR_NFLX, col = "green")
+lines(seq(along = p), nor.VaR_NFLX, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_NFLX <- abs(ESghyp(p, ghdfit_NFLX))
+hyp.ES_NFLX <- abs(ESghyp(p, hypfit_NFLX))
+nig.ES_NFLX <- abs(ESghyp(p, nigfit_NFLX))
+nor.ES_NFLX <- abs(mean(PortTimeS_NFLX, na.rm=TRUE) - sd(c(PortTimeS_NFLX[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_NFLX <- ceiling(p * length(PortTimeS_NFLX))
+emp.ES_NFLX <- sapply(obs.p_NFLX, function(x) abs(mean(sort(c(PortTimeS_NFLX))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_NFLX, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "NFLX \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_NFLX, nig.ES_NFLX, ghd.ES_NFLX, nor.ES_NFLX, emp.ES_NFLX), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_NFLX), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_NFLX, ghd.ES_NFLX, hyp.ES_NFLX, nig.ES_NFLX, nor.ES_NFLX)))
+lines(1:length(p), ghd.ES_NFLX, col = "red")
+lines(1:length(p), hyp.ES_NFLX, col = "blue")
+lines(1:length(p), nig.ES_NFLX, col = "green")
+lines(1:length(p), nor.ES_NFLX, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+y <- timeSeries(PortTimeS$NFLX.Adjusted, charvec = datets)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) {
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="NFLX",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+
+### BRK_B ###
+
+
+```{r}
+
+datets <-as.character(datets)
+PortTimeS_BRK_B<-timeSeries(PortTimeS$BRK_B.Adjusted, charvec = datets)
+
+attr(PortTimeS_BRK_B, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_BRK_B)
+
+head(PortTimeS_BRK_B)
+
+
+ef_BRK_B<-density(PortTimeS_BRK_B, na.rm=TRUE)
+plot(ef_BRK_B)
+
+
+ghdfit_BRK_B<- fit.ghypuv(PortTimeS_BRK_B, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_BRK_B<- fit.hypuv(PortTimeS_BRK_B, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_BRK_B<- fit.NIGuv(PortTimeS_BRK_B, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_BRK_B <- dghyp(ef_BRK_B$x, ghdfit_BRK_B)
+hypdens_BRK_B <- dghyp(ef_BRK_B$x, hypfit_BRK_B)
+nigdens_BRK_B <- dghyp(ef_BRK_B$x, nigfit_BRK_B)
+nordens_BRK_B <- dnorm(ef_BRK_B$x, mean = mean(PortTimeS_BRK_B, na.rm=TRUE), sd = sd(c(PortTimeS_BRK_B[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_BRK_B, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.6),lwd=2)
+lines(ef_BRK_B$x, ghddens_BRK_B, col = "red",lwd=3)
+lines(ef_BRK_B$x, hypdens_BRK_B, col = "blue",lwd=2)
+lines(ef_BRK_B$x, nigdens_BRK_B, col = "green",lwd=2)
+lines(ef_BRK_B$x, nordens_BRK_B, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+# Q-Q plot BRK_B
+
+
+qqghyp(ghdfit_BRK_B, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.9)
+qqghyp(hypfit_BRK_B, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_BRK_B, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_BRK_B <- stepAIC.ghyp(PortTimeS_BRK_B, control = list(maxit = 1000), silent = TRUE)
+head(AIC_BRK_B$fit.table)
+AIC_BRK_B$best.model
+
+AIC_BRK_B$best.model
+
+LRghdnig_BRK_B <- lik.ratio.test(ghdfit_BRK_B, nigfit_BRK_B)
+LRghdnig_BRK_B    ##if TRUE there is no relationship between the data sets
+LRghdhyp_BRK_B <- lik.ratio.test(ghdfit_BRK_B, hypfit_BRK_B)
+LRghdhyp_BRK_B    ##if FASLE there is a relationship between the data sets
+
+```
+
+Probabilities & VaR calculation (using quantiles)
+```{r}
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_BRK_B <- abs(qghyp(p, ghdfit_BRK_B))
+hyp.VaR_BRK_B <- abs(qghyp(p, hypfit_BRK_B))
+nig.VaR_BRK_B <- abs(qghyp(p, nigfit_BRK_B))
+nor.VaR_BRK_B <- abs(qnorm(p, mean = mean(PortTimeS_BRK_B, na.rm=TRUE), sd = sd(c(PortTimeS_BRK_B[, 1]), na.rm = TRUE))) 
+emp.VaR_BRK_B <- abs(quantile(x = PortTimeS_BRK_B, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_BRK_B, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="BRK_B \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_BRK_B, nig.VaR_BRK_B, ghd.VaR_BRK_B, nor.VaR_BRK_B, emp.VaR_BRK_B)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_BRK_B), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_BRK_B, ghd.VaR_BRK_B, hyp.VaR_BRK_B,
+                          nig.VaR_BRK_B, nor.VaR_BRK_B)))
+lines(seq(along = p), ghd.VaR_BRK_B, col = "red")
+lines(seq(along = p), hyp.VaR_BRK_B, col = "blue")
+lines(seq(along = p), nig.VaR_BRK_B, col = "green")
+lines(seq(along = p), nor.VaR_BRK_B, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_BRK_B <- abs(ESghyp(p, ghdfit_BRK_B))
+hyp.ES_BRK_B <- abs(ESghyp(p, hypfit_BRK_B))
+nig.ES_BRK_B <- abs(ESghyp(p, nigfit_BRK_B))
+nor.ES_BRK_B <- abs(mean(PortTimeS_BRK_B, na.rm=TRUE) - sd(c(PortTimeS_BRK_B[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_BRK_B <- ceiling(p * length(PortTimeS_BRK_B))
+emp.ES_BRK_B <- sapply(obs.p_BRK_B, function(x) abs(mean(sort(c(PortTimeS_BRK_B))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_BRK_B, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "BRK_B \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_BRK_B, nig.ES_BRK_B, ghd.ES_BRK_B, nor.ES_BRK_B, emp.ES_BRK_B), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_BRK_B), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_BRK_B, ghd.ES_BRK_B, hyp.ES_BRK_B, nig.ES_BRK_B, nor.ES_BRK_B)))
+lines(1:length(p), ghd.ES_BRK_B, col = "red")
+lines(1:length(p), hyp.ES_BRK_B, col = "blue")
+lines(1:length(p), nig.ES_BRK_B, col = "green")
+lines(1:length(p), nor.ES_BRK_B, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+y <- timeSeries(PortTimeS$BRK_B.Adjusted, charvec = datets)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) {
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="BRK_B",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+
+
+
+### JPM ###
+
+
+```{r}
+
+datets <-as.character(datets)
+PortTimeS_JPM<-timeSeries(PortTimeS$JPM.Adjusted, charvec = datets)
+
+attr(PortTimeS_JPM, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_JPM)
+
+head(PortTimeS_JPM)
+
+
+ef_JPM<-density(PortTimeS_JPM, na.rm=TRUE)
+plot(ef_JPM)
+
+
+ghdfit_JPM<- fit.ghypuv(PortTimeS_JPM, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_JPM<- fit.hypuv(PortTimeS_JPM, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_JPM<- fit.NIGuv(PortTimeS_JPM, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_JPM <- dghyp(ef_JPM$x, ghdfit_JPM)
+hypdens_JPM <- dghyp(ef_JPM$x, hypfit_JPM)
+nigdens_JPM <- dghyp(ef_JPM$x, nigfit_JPM)
+nordens_JPM <- dnorm(ef_JPM$x, mean = mean(PortTimeS_JPM, na.rm=TRUE), sd = sd(c(PortTimeS_JPM[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_JPM, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.6),lwd=2)
+lines(ef_JPM$x, ghddens_JPM, col = "red",lwd=3)
+lines(ef_JPM$x, hypdens_JPM, col = "blue",lwd=2)
+lines(ef_JPM$x, nigdens_JPM, col = "green",lwd=2)
+lines(ef_JPM$x, nordens_JPM, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+# Q-Q plot JPM
+
+
+qqghyp(ghdfit_JPM, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.9)
+qqghyp(hypfit_JPM, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_JPM, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_JPM <- stepAIC.ghyp(PortTimeS_JPM, control = list(maxit = 1000), silent = TRUE)
+head(AIC_JPM$fit.table)
+AIC_JPM$best.model
+
+AIC_JPM$best.model
+
+LRghdnig_JPM <- lik.ratio.test(ghdfit_JPM, nigfit_JPM)
+LRghdnig_JPM    ##if TRUE there is no relationship between the data sets
+LRghdhyp_JPM <- lik.ratio.test(ghdfit_JPM, hypfit_JPM)
+LRghdhyp_JPM    ##if FASLE there is a relationship between the data sets
+
+```
+
+Probabilities & VaR calculation (using quantiles)
+```{r}
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_JPM <- abs(qghyp(p, ghdfit_JPM))
+hyp.VaR_JPM <- abs(qghyp(p, hypfit_JPM))
+nig.VaR_JPM <- abs(qghyp(p, nigfit_JPM))
+nor.VaR_JPM <- abs(qnorm(p, mean = mean(PortTimeS_JPM, na.rm=TRUE), sd = sd(c(PortTimeS_JPM[, 1]), na.rm = TRUE))) 
+emp.VaR_JPM <- abs(quantile(x = PortTimeS_JPM, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_JPM, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="JPM \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_JPM, nig.VaR_JPM, ghd.VaR_JPM, nor.VaR_JPM, emp.VaR_JPM)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_JPM), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_JPM, ghd.VaR_JPM, hyp.VaR_JPM,
+                          nig.VaR_JPM, nor.VaR_JPM)))
+lines(seq(along = p), ghd.VaR_JPM, col = "red")
+lines(seq(along = p), hyp.VaR_JPM, col = "blue")
+lines(seq(along = p), nig.VaR_JPM, col = "green")
+lines(seq(along = p), nor.VaR_JPM, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_JPM <- abs(ESghyp(p, ghdfit_JPM))
+hyp.ES_JPM <- abs(ESghyp(p, hypfit_JPM))
+nig.ES_JPM <- abs(ESghyp(p, nigfit_JPM))
+nor.ES_JPM <- abs(mean(PortTimeS_JPM, na.rm=TRUE) - sd(c(PortTimeS_JPM[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_JPM <- ceiling(p * length(PortTimeS_JPM))
+emp.ES_JPM <- sapply(obs.p_JPM, function(x) abs(mean(sort(c(PortTimeS_JPM))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_JPM, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "JPM \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_JPM, nig.ES_JPM, ghd.ES_JPM, nor.ES_JPM, emp.ES_JPM), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_JPM), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_JPM, ghd.ES_JPM, hyp.ES_JPM, nig.ES_JPM, nor.ES_JPM)))
+lines(1:length(p), ghd.ES_JPM, col = "red")
+lines(1:length(p), hyp.ES_JPM, col = "blue")
+lines(1:length(p), nig.ES_JPM, col = "green")
+lines(1:length(p), nor.ES_JPM, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+y <- timeSeries(PortTimeS$JPM.Adjusted, charvec = datets)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) {
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="JPM",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+
+### C ###
+
+
+```{r}
+
+datets <-as.character(datets)
+PortTimeS_C<-timeSeries(PortTimeS$C.Adjusted, charvec = datets)
+
+attr(PortTimeS_C, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_C)
+
+head(PortTimeS_C)
+
+
+ef_C<-density(PortTimeS_C, na.rm=TRUE)
+plot(ef_C)
+
+
+ghdfit_C<- fit.ghypuv(PortTimeS_C, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_C<- fit.hypuv(PortTimeS_C, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_C<- fit.NIGuv(PortTimeS_C, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_C <- dghyp(ef_C$x, ghdfit_C)
+hypdens_C <- dghyp(ef_C$x, hypfit_C)
+nigdens_C <- dghyp(ef_C$x, nigfit_C)
+nordens_C <- dnorm(ef_C$x, mean = mean(PortTimeS_C, na.rm=TRUE), sd = sd(c(PortTimeS_C[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_C, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.6),lwd=2)
+lines(ef_C$x, ghddens_C, col = "red",lwd=3)
+lines(ef_C$x, hypdens_C, col = "blue",lwd=2)
+lines(ef_C$x, nigdens_C, col = "green",lwd=2)
+lines(ef_C$x, nordens_C, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+# Q-Q plot C
+
+
+qqghyp(ghdfit_C, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.9)
+qqghyp(hypfit_C, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_C, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_C <- stepAIC.ghyp(PortTimeS_C, control = list(maxit = 1000), silent = TRUE)
+head(AIC_C$fit.table)
+AIC_C$best.model
+
+AIC_C$best.model
+
+LRghdnig_C <- lik.ratio.test(ghdfit_C, nigfit_C)
+LRghdnig_C    ##if TRUE there is no relationship between the data sets
+LRghdhyp_C <- lik.ratio.test(ghdfit_C, hypfit_C)
+LRghdhyp_C    ##if FASLE there is a relationship between the data sets
+
+```
+
+Probabilities & VaR calculation (using quantiles)
+```{r}
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_C <- abs(qghyp(p, ghdfit_C))
+hyp.VaR_C <- abs(qghyp(p, hypfit_C))
+nig.VaR_C <- abs(qghyp(p, nigfit_C))
+nor.VaR_C <- abs(qnorm(p, mean = mean(PortTimeS_C, na.rm=TRUE), sd = sd(c(PortTimeS_C[, 1]), na.rm = TRUE))) 
+emp.VaR_C <- abs(quantile(x = PortTimeS_C, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_C, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="C \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_C, nig.VaR_C, ghd.VaR_C, nor.VaR_C, emp.VaR_C)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_C), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_C, ghd.VaR_C, hyp.VaR_C,
+                          nig.VaR_C, nor.VaR_C)))
+lines(seq(along = p), ghd.VaR_C, col = "red")
+lines(seq(along = p), hyp.VaR_C, col = "blue")
+lines(seq(along = p), nig.VaR_C, col = "green")
+lines(seq(along = p), nor.VaR_C, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_C <- abs(ESghyp(p, ghdfit_C))
+hyp.ES_C <- abs(ESghyp(p, hypfit_C))
+nig.ES_C <- abs(ESghyp(p, nigfit_C))
+nor.ES_C <- abs(mean(PortTimeS_C, na.rm=TRUE) - sd(c(PortTimeS_C[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_C <- ceiling(p * length(PortTimeS_C))
+emp.ES_C <- sapply(obs.p_C, function(x) abs(mean(sort(c(PortTimeS_C))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_C, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "C \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_C, nig.ES_C, ghd.ES_C, nor.ES_C, emp.ES_C), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_C), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_C, ghd.ES_C, hyp.ES_C, nig.ES_C, nor.ES_C)))
+lines(1:length(p), ghd.ES_C, col = "red")
+lines(1:length(p), hyp.ES_C, col = "blue")
+lines(1:length(p), nig.ES_C, col = "green")
+lines(1:length(p), nor.ES_C, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+y <- timeSeries(PortTimeS$C.Adjusted, charvec = datets)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) { 
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="C",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+
+
+
+
+### Portfolio - 2023 total returns ### END
+
+
+#### Equally weighted portfolio ###
+ 
+```{r}
+port<- Portfolio.totret.all
+port$NVDA.ret <- Delt(port$NVDA.Adjusted)
+port$MSFT.ret <- Delt(port$MSFT.Adjusted)
+port$AAPL.ret <- Delt(port$AAPL.Adjusted)
+port$NFLX.ret <- Delt(port$NFLX.Adjusted)
+
+port$BRK_B.ret <- Delt(port$BRK_B.Adjusted)
+port$JPM.ret <- Delt(port$JPM.Adjusted)
+port$C.ret <- Delt(port$C.Adjusted)
+port$BLK.ret <- Delt(port$BLK.Adjusted)
+
+port$MCD.ret <- Delt(port$MCD.Adjusted)
+port$SKX.ret <- Delt(port$SKX.Adjusted)
+port$SBUX.ret <- Delt(port$SBUX.Adjusted)
+port$NKE.ret <- Delt(port$NKE.Adjusted)
+
+# port[c(1:3,nrow(port)),]
+
+
+port.df <- data.frame(Date = index(port), coredata(port))
+port.df[c(1:3,nrow(port.df)),]
+
+
+nsecurities = 12
+
+ewport <- port.df[c(1,(ncol(port.df)-(nsecurities-1)):ncol(port.df))] 
+# ewport[c(1:3,nrow(ewport)),]
+names(ewport) <-paste(c("date",
+                        "NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE"))
+
+rownames(ewport) <-seq(1:nrow(ewport))
+# ewport[c(1:3,nrow(ewport)),]
+
+## gross returns ( 1 + returns)
+
+ewport.xts <-xts(ewport[, -1], order.by = as.Date(ewport$date))
+ewport.xts <- 1+ewport.xts
+ewport <- data.frame(date = index(ewport.xts), coredata(ewport.xts))
+
+ewport[c(1:3,nrow(ewport)),]
+```
+year 1 inv / returns
+```{r}
+
+### Year 1 
+
+ew.y1<- subset(ewport,
+                ewport$date >= as.Date("2014-12-31") &
+                ewport$date <= as.Date("2015-12-31"))
+
+ew.y1[1, 2:ncol(ew.y1)] <- 1
+
+# Apply cumprod to selected columns
+columns_to_cumprod <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+
+ew.y1[columns_to_cumprod] <- cumprod(ew.y1[columns_to_cumprod])   ## Simplified previous code
+
+# Select specific rows and columns
+ew.y1[c(1:3, nrow(ew.y1)), ]
+
+num.sec = 12
+
+ew.y1$NVDA.idx <- (1/num.sec)*(ew.y1$NVDA)  ##(q1.inv/num.sec)
+ew.y1$MSFT.idx <- (1/num.sec)*(ew.y1$MSFT)
+ew.y1$AAPL.idx <- (1/num.sec)*(ew.y1$AAPL)
+ew.y1$NFLX.idx <- (1/num.sec)*(ew.y1$NFLX)
+
+ew.y1$BRK_B.idx <- (1/num.sec)*(ew.y1$BRK_B)
+ew.y1$JPM.idx <- (1/num.sec)*(ew.y1$JPM)
+ew.y1$C.idx <- (1/num.sec)*(ew.y1$C)
+ew.y1$BLK.idx <- (1/num.sec)*(ew.y1$BLK)
+
+ew.y1$MCD.idx <- (1/num.sec)*(ew.y1$MCD)
+ew.y1$SKX.idx <- (1/num.sec)*(ew.y1$SKX)
+ew.y1$SBUX.idx <- (1/num.sec)*(ew.y1$SBUX)
+ew.y1$NKE.idx <- (1/num.sec)*(ew.y1$NKE)
+
+
+ew.y1[c(1:3, nrow(ew.y1)), ]
+
+y1.val <- data.frame(rowSums(ew.y1[,(ncol(ew.y1)-num.sec+1):ncol(ew.y1)]))
+y1.val[c(1:3,nrow(y1.val)),]
+
+
+names(y1.val) <- paste("port.val")
+y1.val$date <- ew.y1$date
+y1.val[c(1:3,nrow(y1.val)),]
+y2.inv <- y1.val[nrow(y1.val),1]
+y2.inv
+
+
+```
+
+```{r}
+##year 2 - 2016
+
+ew.y2 <- subset(ewport,
+                ewport$date >= as.Date("2016-01-01") &
+                ewport$date <= as.Date("2016-12-31"))
+# ew.y2[c(1:3,nrow(ew.y2)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y2[columns_to_cumprod2] <- cumprod(ew.y2[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y2$NVDA.idx <- (y2.inv/num.sec)*(ew.y2$NVDA)  ##(q1.inv/num.sec)
+ew.y2$MSFT.idx <- (y2.inv/num.sec)*(ew.y2$MSFT)
+ew.y2$AAPL.idx <- (y2.inv/num.sec)*(ew.y2$AAPL)
+ew.y2$NFLX.idx <- (y2.inv/num.sec)*(ew.y2$NFLX)
+
+ew.y2$BRK_B.idx <- (y2.inv/num.sec)*(ew.y2$BRK_B)
+ew.y2$JPM.idx <- (y2.inv/num.sec)*(ew.y2$JPM)
+ew.y2$C.idx <- (y2.inv/num.sec)*(ew.y2$C)
+ew.y2$BLK.idx <- (y2.inv/num.sec)*(ew.y2$BLK)
+
+ew.y2$MCD.idx <- (y2.inv/num.sec)*(ew.y2$MCD)
+ew.y2$SKX.idx <- (y2.inv/num.sec)*(ew.y2$SKX)
+ew.y2$SBUX.idx <- (y2.inv/num.sec)*(ew.y2$SBUX)
+ew.y2$NKE.idx <- (y2.inv/num.sec)*(ew.y2$NKE)
+
+# ew.y2[c(1:3, nrow(ew.y2)), ]
+
+y2.val <- data.frame(rowSums(ew.y2[,(ncol(ew.y2)-num.sec+1):ncol(ew.y2)]))
+# y2.val[c(1:3,nrow(y2.val)),]
+names(y2.val) <- paste("port.val")
+y2.val$date <- ew.y2$date
+y2.val[c(1:3,nrow(y2.val)),]
+
+
+y3.inv <- y2.val[nrow(y2.val),1]
+y3.inv
+```
+
+
+## Year 3 - 2017
+```{r}
+ew.y3 <- subset(ewport,
+                ewport$date >= as.Date("2017-01-01") &
+                ewport$date <= as.Date("2017-12-31"))
+# ew.y3[c(1:3,nrow(ew.y3)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y3[columns_to_cumprod2] <- cumprod(ew.y3[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y3$NVDA.idx <- (y3.inv/num.sec)*(ew.y3$NVDA)  ##(q1.inv/num.sec)
+ew.y3$MSFT.idx <- (y3.inv/num.sec)*(ew.y3$MSFT)
+ew.y3$AAPL.idx <- (y3.inv/num.sec)*(ew.y3$AAPL)
+ew.y3$NFLX.idx <- (y3.inv/num.sec)*(ew.y3$NFLX)
+
+ew.y3$BRK_B.idx <- (y3.inv/num.sec)*(ew.y3$BRK_B)
+ew.y3$JPM.idx <- (y3.inv/num.sec)*(ew.y3$JPM)
+ew.y3$C.idx <- (y3.inv/num.sec)*(ew.y3$C)
+ew.y3$BLK.idx <- (y3.inv/num.sec)*(ew.y3$BLK)
+
+ew.y3$MCD.idx <- (y3.inv/num.sec)*(ew.y3$MCD)
+ew.y3$SKX.idx <- (y3.inv/num.sec)*(ew.y3$SKX)
+ew.y3$SBUX.idx <- (y3.inv/num.sec)*(ew.y3$SBUX)
+ew.y3$NKE.idx <- (y3.inv/num.sec)*(ew.y3$NKE)
+
+# ew.y3[c(1:3, nrow(ew.y3)), ]
+
+y3.val <- data.frame(rowSums(ew.y3[,(ncol(ew.y3)-num.sec+1):ncol(ew.y3)]))
+# y3.val[c(1:3,nrow(y3.val)),]
+names(y3.val) <- paste("port.val")
+y3.val$date <- ew.y3$date
+y3.val[c(1:3,nrow(y3.val)),]
+
+y4.inv <- y3.val[nrow(y3.val),1]
+y4.inv
+```
+## Year 4 -2018
+```{r}
+ew.y4 <- subset(ewport,
+                ewport$date >= as.Date("2018-01-01") &
+                ewport$date <= as.Date("2018-12-31"))
+# ew.y4[c(1:3,nrow(ew.y4)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y4[columns_to_cumprod2] <- cumprod(ew.y4[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y4$NVDA.idx <- (y4.inv/num.sec)*(ew.y4$NVDA)  ##(q1.inv/num.sec)
+ew.y4$MSFT.idx <- (y4.inv/num.sec)*(ew.y4$MSFT)
+ew.y4$AAPL.idx <- (y4.inv/num.sec)*(ew.y4$AAPL)
+ew.y4$NFLX.idx <- (y4.inv/num.sec)*(ew.y4$NFLX)
+
+ew.y4$BRK_B.idx <- (y4.inv/num.sec)*(ew.y4$BRK_B)
+ew.y4$JPM.idx <- (y4.inv/num.sec)*(ew.y4$JPM)
+ew.y4$C.idx <- (y4.inv/num.sec)*(ew.y4$C)
+ew.y4$BLK.idx <- (y4.inv/num.sec)*(ew.y4$BLK)
+
+ew.y4$MCD.idx <- (y4.inv/num.sec)*(ew.y4$MCD)
+ew.y4$SKX.idx <- (y4.inv/num.sec)*(ew.y4$SKX)
+ew.y4$SBUX.idx <- (y4.inv/num.sec)*(ew.y4$SBUX)
+ew.y4$NKE.idx <- (y4.inv/num.sec)*(ew.y4$NKE)
+
+# ew.y4[c(1:3, nrow(ew.y4)), ]
+
+y4.val <- data.frame(rowSums(ew.y4[,(ncol(ew.y4)-num.sec+1):ncol(ew.y4)]))
+# y4.val[c(1:3,nrow(y4.val)),]
+names(y4.val) <- paste("port.val")
+y4.val$date <- ew.y4$date
+y4.val[c(1:3,nrow(y4.val)),]
+
+y5.inv <- y4.val[nrow(y4.val),1]
+y5.inv
+```
+## Year 5 -2019
+```{r}
+ew.y5 <- subset(ewport,
+                ewport$date >= as.Date("2019-01-01") &
+                ewport$date <= as.Date("2019-12-31"))
+# ew.y5[c(1:3,nrow(ew.y5)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y5[columns_to_cumprod2] <- cumprod(ew.y5[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y5$NVDA.idx <- (y5.inv/num.sec)*(ew.y5$NVDA)  ##(q1.inv/num.sec)
+ew.y5$MSFT.idx <- (y5.inv/num.sec)*(ew.y5$MSFT)
+ew.y5$AAPL.idx <- (y5.inv/num.sec)*(ew.y5$AAPL)
+ew.y5$NFLX.idx <- (y5.inv/num.sec)*(ew.y5$NFLX)
+
+ew.y5$BRK_B.idx <- (y5.inv/num.sec)*(ew.y5$BRK_B)
+ew.y5$JPM.idx <- (y5.inv/num.sec)*(ew.y5$JPM)
+ew.y5$C.idx <- (y5.inv/num.sec)*(ew.y5$C)
+ew.y5$BLK.idx <- (y5.inv/num.sec)*(ew.y5$BLK)
+
+ew.y5$MCD.idx <- (y5.inv/num.sec)*(ew.y5$MCD)
+ew.y5$SKX.idx <- (y5.inv/num.sec)*(ew.y5$SKX)
+ew.y5$SBUX.idx <- (y5.inv/num.sec)*(ew.y5$SBUX)
+ew.y5$NKE.idx <- (y5.inv/num.sec)*(ew.y5$NKE)
+
+# ew.y5[c(1:3, nrow(ew.y5)), ]
+
+y5.val <- data.frame(rowSums(ew.y5[,(ncol(ew.y5)-num.sec+1):ncol(ew.y5)]))
+# y5.val[c(1:3,nrow(y5.val)),]
+names(y5.val) <- paste("port.val")
+y5.val$date <- ew.y5$date
+y5.val[c(1:3,nrow(y5.val)),]
+
+y6.inv <- y5.val[nrow(y5.val),1]
+y6.inv
+```
+## Year 6 -2020
+```{r}
+ew.y6 <- subset(ewport,
+                ewport$date >= as.Date("2020-01-01") &
+                ewport$date <= as.Date("2020-12-31"))
+# ew.y6[c(1:3,nrow(ew.y6)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y6[columns_to_cumprod2] <- cumprod(ew.y6[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y6$NVDA.idx <- (y6.inv/num.sec)*(ew.y6$NVDA)  ##(q1.inv/num.sec)
+ew.y6$MSFT.idx <- (y6.inv/num.sec)*(ew.y6$MSFT)
+ew.y6$AAPL.idx <- (y6.inv/num.sec)*(ew.y6$AAPL)
+ew.y6$NFLX.idx <- (y6.inv/num.sec)*(ew.y6$NFLX)
+
+ew.y6$BRK_B.idx <- (y6.inv/num.sec)*(ew.y6$BRK_B)
+ew.y6$JPM.idx <- (y6.inv/num.sec)*(ew.y6$JPM)
+ew.y6$C.idx <- (y6.inv/num.sec)*(ew.y6$C)
+ew.y6$BLK.idx <- (y6.inv/num.sec)*(ew.y6$BLK)
+
+ew.y6$MCD.idx <- (y6.inv/num.sec)*(ew.y6$MCD)
+ew.y6$SKX.idx <- (y6.inv/num.sec)*(ew.y6$SKX)
+ew.y6$SBUX.idx <- (y6.inv/num.sec)*(ew.y6$SBUX)
+ew.y6$NKE.idx <- (y6.inv/num.sec)*(ew.y6$NKE)
+
+# ew.y6[c(1:3, nrow(ew.y6)), ]
+
+y6.val <- data.frame(rowSums(ew.y6[,(ncol(ew.y6)-num.sec+1):ncol(ew.y6)]))
+# y6.val[c(1:3,nrow(y6.val)),]
+names(y6.val) <- paste("port.val")
+y6.val$date <- ew.y6$date
+y6.val[c(1:3,nrow(y6.val)),]
+
+y7.inv <- y6.val[nrow(y6.val),1]
+y7.inv
+```
+## Year 7 -2021
+```{r}
+ew.y7 <- subset(ewport,
+                ewport$date >= as.Date("2021-01-01") &
+                ewport$date <= as.Date("2021-12-31"))
+# ew.y7[c(1:3,nrow(ew.y7)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y7[columns_to_cumprod2] <- cumprod(ew.y7[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y7$NVDA.idx <- (y7.inv/num.sec)*(ew.y7$NVDA)  ##(q1.inv/num.sec)
+ew.y7$MSFT.idx <- (y7.inv/num.sec)*(ew.y7$MSFT)
+ew.y7$AAPL.idx <- (y7.inv/num.sec)*(ew.y7$AAPL)
+ew.y7$NFLX.idx <- (y7.inv/num.sec)*(ew.y7$NFLX)
+
+ew.y7$BRK_B.idx <- (y7.inv/num.sec)*(ew.y7$BRK_B)
+ew.y7$JPM.idx <- (y7.inv/num.sec)*(ew.y7$JPM)
+ew.y7$C.idx <- (y7.inv/num.sec)*(ew.y7$C)
+ew.y7$BLK.idx <- (y7.inv/num.sec)*(ew.y7$BLK)
+
+ew.y7$MCD.idx <- (y7.inv/num.sec)*(ew.y7$MCD)
+ew.y7$SKX.idx <- (y7.inv/num.sec)*(ew.y7$SKX)
+ew.y7$SBUX.idx <- (y7.inv/num.sec)*(ew.y7$SBUX)
+ew.y7$NKE.idx <- (y7.inv/num.sec)*(ew.y7$NKE)
+
+# ew.y7[c(1:3, nrow(ew.y7)), ]
+
+y7.val <- data.frame(rowSums(ew.y7[,(ncol(ew.y7)-num.sec+1):ncol(ew.y7)]))
+# y7.val[c(1:3,nrow(y7.val)),]
+names(y7.val) <- paste("port.val")
+y7.val$date <- ew.y7$date
+y7.val[c(1:3,nrow(y7.val)),]
+
+y8.inv <- y7.val[nrow(y7.val),1]
+y8.inv
+```
+## Year 8 -2022
+```{r}
+ew.y8 <- subset(ewport,
+                ewport$date >= as.Date("2022-01-01") &
+                ewport$date <= as.Date("2022-12-31"))
+# ew.y8[c(1:3,nrow(ew.y8)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y8[columns_to_cumprod2] <- cumprod(ew.y8[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y8$NVDA.idx <- (y8.inv/num.sec)*(ew.y8$NVDA)  ##(q1.inv/num.sec)
+ew.y8$MSFT.idx <- (y8.inv/num.sec)*(ew.y8$MSFT)
+ew.y8$AAPL.idx <- (y8.inv/num.sec)*(ew.y8$AAPL)
+ew.y8$NFLX.idx <- (y8.inv/num.sec)*(ew.y8$NFLX)
+
+ew.y8$BRK_B.idx <- (y8.inv/num.sec)*(ew.y8$BRK_B)
+ew.y8$JPM.idx <- (y8.inv/num.sec)*(ew.y8$JPM)
+ew.y8$C.idx <- (y8.inv/num.sec)*(ew.y8$C)
+ew.y8$BLK.idx <- (y8.inv/num.sec)*(ew.y8$BLK)
+
+ew.y8$MCD.idx <- (y8.inv/num.sec)*(ew.y8$MCD)
+ew.y8$SKX.idx <- (y8.inv/num.sec)*(ew.y8$SKX)
+ew.y8$SBUX.idx <- (y8.inv/num.sec)*(ew.y8$SBUX)
+ew.y8$NKE.idx <- (y8.inv/num.sec)*(ew.y8$NKE)
+
+# ew.y8[c(1:3, nrow(ew.y8)), ]
+
+y8.val <- data.frame(rowSums(ew.y8[,(ncol(ew.y8)-num.sec+1):ncol(ew.y8)]))
+# y8.val[c(1:3,nrow(y8.val)),]
+names(y8.val) <- paste("port.val")
+y8.val$date <- ew.y8$date
+y8.val[c(1:3,nrow(y8.val)),]
+
+y9.inv <- y8.val[nrow(y8.val),1]
+y9.inv
+```
+## Year 9 -2023
+```{r}
+ew.y9 <- subset(ewport,
+                ewport$date >= as.Date("2023-01-01") &
+                ewport$date <= as.Date("2023-12-31"))
+# ew.y9[c(1:3,nrow(ew.y9)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y9[columns_to_cumprod2] <- cumprod(ew.y9[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y9$NVDA.idx <- (y9.inv/num.sec)*(ew.y9$NVDA)  ##(q1.inv/num.sec)
+ew.y9$MSFT.idx <- (y9.inv/num.sec)*(ew.y9$MSFT)
+ew.y9$AAPL.idx <- (y9.inv/num.sec)*(ew.y9$AAPL)
+ew.y9$NFLX.idx <- (y9.inv/num.sec)*(ew.y9$NFLX)
+
+ew.y9$BRK_B.idx <- (y9.inv/num.sec)*(ew.y9$BRK_B)
+ew.y9$JPM.idx <- (y9.inv/num.sec)*(ew.y9$JPM)
+ew.y9$C.idx <- (y9.inv/num.sec)*(ew.y9$C)
+ew.y9$BLK.idx <- (y9.inv/num.sec)*(ew.y9$BLK)
+
+ew.y9$MCD.idx <- (y9.inv/num.sec)*(ew.y9$MCD)
+ew.y9$SKX.idx <- (y9.inv/num.sec)*(ew.y9$SKX)
+ew.y9$SBUX.idx <- (y9.inv/num.sec)*(ew.y9$SBUX)
+ew.y9$NKE.idx <- (y9.inv/num.sec)*(ew.y9$NKE)
+
+# ew.y9[c(1:3, nrow(ew.y9)), ]
+
+y9.val <- data.frame(rowSums(ew.y9[,(ncol(ew.y9)-num.sec+1):ncol(ew.y9)]))
+# y9.val[c(1:3,nrow(y9.val)),]
+names(y9.val) <- paste("port.val")
+y9.val$date <- ew.y9$date
+y9.val[c(1:3,nrow(y9.val)),]
+
+y10.inv <- y9.val[nrow(y9.val),1]
+y10.inv
+```
+
+
+```{r}
+ew.portval <- rbind(y1.val,y2.val,y3.val,y4.val,y5.val,y6.val,y7.val,y8.val,y9.val)
+ew.portval[c(1:3,nrow(ew.portval)),]
+
+
+```
+
+Portfolio returns: 
+
+ew.portval
+### EW Portfolio ###
+
+
+```{r}
+
+# datets <-as.character(dates)
+
+
+
+
+PortTimeS_TS<-timeSeries(ew.portval$port.val, charvec = datets)
+
+attr(PortTimeS_TS, 'time')<-date   ##add time attribute to dataset
+str(PortTimeS_TS)
+
+head(PortTimeS_TS)
+
+PortTimeS_Port<-returnseries(PortTimeS_TS)
+attr(PortTimeS_Port, 'time')<-date
+str(PortTimeS_Port)
+head(PortTimeS_Port)
+
+
+
+ef_Port<-density(PortTimeS_Port, na.rm=TRUE)
+plot(ef_Port)
+
+
+ghdfit_Port<- fit.ghypuv(PortTimeS_Port, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE,silent = TRUE)
+hypfit_Port<- fit.hypuv(PortTimeS_Port, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+nigfit_Port<- fit.NIGuv(PortTimeS_Port, symmetric = FALSE, control = list(maxit = 500), na.rm = TRUE, silent = TRUE)
+
+
+ghddens_Port <- dghyp(ef_Port$x, ghdfit_Port)
+hypdens_Port <- dghyp(ef_Port$x, hypfit_Port)
+nigdens_Port <- dghyp(ef_Port$x, nigfit_Port)
+nordens_Port <- dnorm(ef_Port$x, mean = mean(PortTimeS_Port, na.rm=TRUE), sd = sd(c(PortTimeS_Port[, 1]), na.rm=TRUE))
+col.def <- c("black", "red", "blue", "green", "orange")
+plot(ef_Port, xlab = "", ylab = expression(f(x)), ylim = c(0, 0.6),lwd=2)
+lines(ef_Port$x, ghddens_Port, col = "red",lwd=3)
+lines(ef_Port$x, hypdens_Port, col = "blue",lwd=2)
+lines(ef_Port$x, nigdens_Port, col = "green",lwd=2)
+lines(ef_Port$x, nordens_Port, col = "orange",lwd=2)
+
+legend("topleft",
+       legend = c("empirical", "GHD", "HYP", "NIG", "NORM"),
+       col = col.def, lty = 1)
+
+
+# Q-Q plot Port
+
+
+qqghyp(ghdfit_Port, line = TRUE, ghyp.col = "red", plot.legend = FALSE,
+       gaussian = FALSE, main = "Q-Q plot", cex = 0.9)
+qqghyp(hypfit_Port, add = TRUE, ghyp.pch = 2, ghyp.col = "blue",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+qqghyp(nigfit_Port, add = TRUE, ghyp.pch = 3, ghyp.col = "green",
+       gaussian = FALSE, line = FALSE, cex = 0.8)
+legend("topleft", legend = c("GHD", "HYP", "NIG"), 
+       col = col.def[-c(1,5)], pch = 1:3)
+AIC_Port <- stepAIC.ghyp(PortTimeS_Port, control = list(maxit = 1000), silent = TRUE)
+head(AIC_Port$fit.table)
+AIC_Port$best.model
+
+AIC_Port$best.model
+
+LRghdnig_Port <- lik.ratio.test(ghdfit_Port, nigfit_Port)
+LRghdnig_Port    ##if TRUE there is no relationship between the data sets
+LRghdhyp_Port <- lik.ratio.test(ghdfit_Port, hypfit_Port)
+LRghdhyp_Port    ##if FASLE there is a relationship between the data sets
+
+```
+
+Probabilities & VaR calculation (using quantiles)
+```{r}
+p <- seq(0.001, 0.05, 0.001)
+
+# VaR calculation (using quantiles)
+
+ghd.VaR_Port <- abs(qghyp(p, ghdfit_Port))
+hyp.VaR_Port <- abs(qghyp(p, hypfit_Port))
+nig.VaR_Port <- abs(qghyp(p, nigfit_Port))
+nor.VaR_Port <- abs(qnorm(p, mean = mean(PortTimeS_Port, na.rm=TRUE), sd = sd(c(PortTimeS_Port[, 1]), na.rm = TRUE))) 
+emp.VaR_Port <- abs(quantile(x = PortTimeS_Port, probs = p, na.rm=TRUE)) 
+
+# Plotting VaR
+plot(emp.VaR_Port, type = "l", xlab = "", ylab = "VaR", axes = FALSE, main="Port \n Value at Risk (VaR) for Different Distributions",
+     ylim = range(c(hyp.VaR_Port, nig.VaR_Port, ghd.VaR_Port, nor.VaR_Port, emp.VaR_Port)))
+box()
+axis(1, at = seq(along = p), labels = names(emp.VaR_Port), tick = FALSE)
+axis(2, at = pretty(range(emp.VaR_Port, ghd.VaR_Port, hyp.VaR_Port,
+                          nig.VaR_Port, nor.VaR_Port)))
+lines(seq(along = p), ghd.VaR_Port, col = "red")
+lines(seq(along = p), hyp.VaR_Port, col = "blue")
+lines(seq(along = p), nig.VaR_Port, col = "green")
+lines(seq(along = p), nor.VaR_Port, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+
+
+# ES calculation
+
+ghd.ES_Port <- abs(ESghyp(p, ghdfit_Port))
+hyp.ES_Port <- abs(ESghyp(p, hypfit_Port))
+nig.ES_Port <- abs(ESghyp(p, nigfit_Port))
+nor.ES_Port <- abs(mean(PortTimeS_Port, na.rm=TRUE) - sd(c(PortTimeS_Port[, 1]), na.rm = TRUE) *
+                dnorm(qnorm(1 - p)) / p)
+obs.p_Port <- ceiling(p * length(PortTimeS_Port))
+emp.ES_Port <- sapply(obs.p_Port, function(x) abs(mean(sort(c(PortTimeS_Port))[1:x])))
+
+
+
+# Plotting ES
+
+plot(emp.ES_Port, type = "l", xlab = "", ylab = "ES", axes = FALSE, main = "Port \n Expected Shortfall (ES) for Different Distributions",
+     ylim = range(c(hyp.ES_Port, nig.ES_Port, ghd.ES_Port, nor.ES_Port, emp.ES_Port), na.rm = TRUE))
+box()
+axis(1, at = 1:length(p), labels = names(emp.VaR_Port), tick = FALSE)
+axis(2, at = pretty(range(emp.ES_Port, ghd.ES_Port, hyp.ES_Port, nig.ES_Port, nor.ES_Port)))
+lines(1:length(p), ghd.ES_Port, col = "red")
+lines(1:length(p), hyp.ES_Port, col = "blue")
+lines(1:length(p), nig.ES_Port, col = "green")
+lines(1:length(p), nor.ES_Port, col = "orange")
+legend("topright",
+       legend = c("Empirical", "GHD Generalized Hyperbolic", "HYP Hyperbolic", "NIG Normal Inverse Gaussian", "Normal"),
+       col = col.def, lty = 1)
+```
+
+Suitable distributions for 
+```{r}
+# y <- timeSeries(Portfolio.totret.2013.df[,"NVDA.Adjusted"],charvec = as.character(Portfolio.totret.2013.df[,1]))
+# yret <- na.omit(diff(log(y))*100)
+# head(yret)
+
+PortTimeS_TS<-timeSeries(ew.portval$port.val, charvec = datets)
+attr(PortTimeS_TS, 'time')<-date   ##add time attribute to dataset
+# str(PortTimeS_TS)
+
+y <- PortTimeS_TS#tail(PortTimeS_TS, -1)
+
+rd <- c (1 , 5, 10, 20, 40) 
+yrets <- na.omit( matrix(unlist(lapply(rd,
+                function(x) {
+                  diffs<-diff(log(y),lag = x)
+                  diffs[is.infinite(diffs)] <- NA  # Replace 'inf' with NA
+                  diffs
+                  })),
+                ncol = 5) )
+head(yrets)
+
+
+## Function for xi / chi coefficients 5
+xichi <- function (x){ 
+                      param <- coef(x, type = "alpha.delta") 
+                      rho <- param[["beta"]]/param[["alpha"]] 
+                      zeta <- param[["delta"]]*sqrt(param [["alpha"]]^2-param[["beta"]]^2)
+                      xi <- 1/sqrt(1 + zeta) 
+                      chi <- xi*rho 
+                      result <- c(chi,xi) 
+                      names(result) <- c("chi","xi") 
+                      return(result) 
+                      } 
+## HYP F i t t i n g 
+hypfits <- apply(yrets,2,fit.hypuv,symmetric = FALSE,  silent = TRUE ) 
+# results <- lapply(hypfits[1], xichi)
+# points <- do.call(rbind, results)
+# print(points)
+points <- matrix(unlist(lapply(hypfits,xichi)),ncol=2, byrow = TRUE)
+## Shape tri angle 
+col.def <- c("black","blue","red","green","orange") 
+leg.def <-paste(rd,rep("day retu rn ",5)) 
+plot(points,ylim=c(-0.2,1.2),xlim=c( -1.2,1.2), main="Port",
+col = col.def,pch=16, ylab=expression(xi),
+xlab = expression(chi)) 
+lines(x = c(0 , -1) , y = c(0 , 1) )
+lines(x = c (0 , 1) , y = c (0 , 1) ) 
+lines(x = c( -1, 1) , y = c (1 , 1) ) 
+legend ( "bottomright",legend = leg.def , col = col.def ,pch = 16) 
+text (x = 0.0 , y = 1.05 , label = "Laplace " , srt = 0) 
+text (x = -1.0, y = 1.05 , label = " Exponential " , srt = 0) 
+text (x = 1.0 , y = 1.05 , label = "Exponential " , srt = 0) 
+text (x = 0.0 , y = -0.1 , label = "Normal" , srt = 0) 
+text (x = -0.6, y = 0.5 , label = " Hyperbolic , left skewed" , 
+        srt = 302) 
+text (x = 0.6 , y = 0.5 , label = " Hyperbolic , right skewed" , 
+      srt = 57)
+
+
+```
+
+
+
+
+

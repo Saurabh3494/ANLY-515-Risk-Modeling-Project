@@ -1256,8 +1256,22 @@ port <- cbind(Portfolio.totret.all, Portfolio.prcret.all)
 port[c(1:3,nrow(port)),]
 port$NVDA.ret <- Delt(port$NVDA.Adjusted)
 port$MSFT.ret <- Delt(port$MSFT.Adjusted)
+port$AAPL.ret <- Delt(port$AAPL.Adjusted)
+port$NFLX.ret <- Delt(port$NFLX.Adjusted)
+
+
 port$BRK_B.ret <- Delt(port$BRK_B.Adjusted)
 port$JPM.ret <- Delt(port$JPM.Adjusted)
+port$C.ret <- Delt(port$C.Adjusted)
+port$BLK.ret <- Delt(port$BLK.Adjusted)
+
+
+port$MCD.ret <- Delt(port$MCD.Adjusted)
+port$SKX.ret <- Delt(port$SKX.Adjusted)
+port$SBUX.ret <- Delt(port$SBUX.Adjusted)
+port$NKE.ret <- Delt(port$NKE.Adjusted)
+
+
 port[c(1:3,nrow(port)),]
 
 
@@ -1265,11 +1279,11 @@ port.df <- data.frame(Date = index(port), coredata(port))
 port.df[c(1:3,nrow(port.df)),]
 ```
 
-## Portfolio investment period - 3rd year i.e 2022
+## Portfolio investment period - 2nd last year i.e 2022
 
 ```{r}
 port.df.2022 <- subset(port.df,
-                    port.df$Date >= "2011-12-30" &
+                    port.df$Date >= "2021-12-31" &
                     port.df$Date <= "2022-12-31")
 port.df.2022[c(1:3,nrow(port.df.2022)),]
 
@@ -1291,10 +1305,10 @@ On each rebalancing date, the weights of each firm is set to reset to 1/N (numbe
 
 ```{r}
 
-ewport <- port.df.2022[c(1,(ncol(port.df.2022)-3):ncol(port.df.2022))] 
+ewport <- port.df.2022[c(1,(ncol(port.df.2022)-11):ncol(port.df.2022))] 
 ewport[c(1:3,nrow(ewport)),]
 
-names(ewport) <-paste(c("date","NVDA","MSFT","BRK_B","JPM"))
+names(ewport) <-paste(c("date","NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE"))
 rownames(ewport) <-seq(1:nrow(ewport))
 ewport[c(1:3,nrow(ewport)),]
 
@@ -1315,7 +1329,7 @@ Equally weighted portfolio for Q1 2022
 ## gross returns ( 1 + returns)
 
 ew.q1 <- subset(ewport,
-                ewport$date >= as.Date("2011-12-30") &
+                ewport$date >= as.Date("2021-12-31") &
                 ewport$date <= as.Date("2022-03-31"))
 ew.q1[c(1:3,nrow(ew.q1)),]
 
@@ -1330,7 +1344,7 @@ ew.q1[1, 2:ncol(ew.q1)] <- 1
 # ew.q1$JPM <- cumprod(ew.q1$JPM)
 
 
-columns_to_cumprod <- c("NVDA", "MSFT", "BRK_B", "JPM")
+columns_to_cumprod <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 ew.q1[columns_to_cumprod] <- cumprod(ew.q1[columns_to_cumprod])   ## Simplified previous code
 
 # Select specific rows and columns
@@ -1340,12 +1354,23 @@ ew.q1[c(1:3, nrow(ew.q1)), ]
 ```
 
 ```{r}
-num.sec <- 4 ## Number of securities
+num.sec <- 12 ## Number of securities
 
 ew.q1$NVDA.idx <- (1/num.sec)*(ew.q1$NVDA)  ##(q1.inv/num.sec)
 ew.q1$MSFT.idx <- (1/num.sec)*(ew.q1$MSFT)
+ew.q1$AAPL.idx <- (1/num.sec)*(ew.q1$AAPL)  
+ew.q1$NFLX.idx <- (1/num.sec)*(ew.q1$NFLX)
+
 ew.q1$BRK_B.idx <- (1/num.sec)*(ew.q1$BRK_B)
 ew.q1$JPM.idx <- (1/num.sec)*(ew.q1$JPM)
+ew.q1$C.idx <- (1/num.sec)*(ew.q1$C)
+ew.q1$BLK.idx <- (1/num.sec)*(ew.q1$BLK)
+
+ew.q1$MCD.idx <- (1/num.sec)*(ew.q1$MCD)
+ew.q1$SKX.idx <- (1/num.sec)*(ew.q1$SKX)
+ew.q1$SBUX.idx <- (1/num.sec)*(ew.q1$SBUX)
+ew.q1$NKE.idx <- (1/num.sec)*(ew.q1$NKE)
+
 
 
 ew.q1[c(1:3, nrow(ew.q1)), ]
@@ -1366,7 +1391,7 @@ q2.inv <- q1.val[nrow(q1.val),1]
 q2.inv
 
 ```
-The value of 1.169619 is used at the beginning of the seconf quarter instead of 1.00
+The value of 0.8906874 is used at the beginning of the second quarter instead of 1.00
 
 
 
@@ -1384,17 +1409,35 @@ ew.q2 <- subset(ewport,
                 ewport$date <= as.Date("2022-06-30"))
 ew.q2[c(1:3,nrow(ew.q2)),]
 
-columns_to_cumprod2 <- c("NVDA", "MSFT", "BRK_B", "JPM")
+columns_to_cumprod2 <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 ew.q2[columns_to_cumprod2] <- cumprod(ew.q2[columns_to_cumprod2])   ## Simplified previous code
 
 # Select specific rows and columns
 ew.q2[c(1:3, nrow(ew.q2)), ]
 
 
-ew.q2$NVDA.idx <- (q2.inv/num.sec)*(ew.q2$NVDA)
+# ew.q2$NVDA.idx <- (q2.inv/num.sec)*(ew.q2$NVDA)
+# ew.q2$MSFT.idx <- (q2.inv/num.sec)*(ew.q2$MSFT)
+# ew.q2$BRK_B.idx <- (q2.inv/num.sec)*(ew.q2$BRK_B)
+# ew.q2$JPM.idx <- (q2.inv/num.sec)*(ew.q2$JPM)
+
+
+
+ew.q2$NVDA.idx <- (q2.inv/num.sec)*(ew.q2$NVDA)  ##(q1.inv/num.sec)
 ew.q2$MSFT.idx <- (q2.inv/num.sec)*(ew.q2$MSFT)
+ew.q2$AAPL.idx <- (q2.inv/num.sec)*(ew.q2$AAPL)  
+ew.q2$NFLX.idx <- (q2.inv/num.sec)*(ew.q2$NFLX)
+
 ew.q2$BRK_B.idx <- (q2.inv/num.sec)*(ew.q2$BRK_B)
 ew.q2$JPM.idx <- (q2.inv/num.sec)*(ew.q2$JPM)
+ew.q2$C.idx <- (q2.inv/num.sec)*(ew.q2$C)
+ew.q2$BLK.idx <- (q2.inv/num.sec)*(ew.q2$BLK)
+
+ew.q2$MCD.idx <- (q2.inv/num.sec)*(ew.q2$MCD)
+ew.q2$SKX.idx <- (q2.inv/num.sec)*(ew.q2$SKX)
+ew.q2$SBUX.idx <- (q2.inv/num.sec)*(ew.q2$SBUX)
+ew.q2$NKE.idx <- (q2.inv/num.sec)*(ew.q2$NKE)
+
 
 
 ew.q2[c(1:3, nrow(ew.q2)), ]
@@ -1412,7 +1455,7 @@ q3.inv
 ```
 
 
-The portfolio is  performing well
+The portfolio is NOT performing well
 
 
 Quarter 3
@@ -1424,17 +1467,34 @@ ew.q3 <- subset(ewport,
                 ewport$date <= as.Date("2022-09-30"))
 ew.q3[c(1:3,nrow(ew.q3)),]
 
-columns_to_cumprod2 <- c("NVDA", "MSFT", "BRK_B", "JPM")
+columns_to_cumprod2 <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 ew.q3[columns_to_cumprod2] <- cumprod(ew.q3[columns_to_cumprod2])   ## Simplified previous code
 
 # Select specific rows and columns
 ew.q3[c(1:3, nrow(ew.q3)), ]
 
 
-ew.q3$NVDA.idx <- (q3.inv/num.sec)*(ew.q3$NVDA)
+# ew.q3$NVDA.idx <- (q3.inv/num.sec)*(ew.q3$NVDA)
+# ew.q3$MSFT.idx <- (q3.inv/num.sec)*(ew.q3$MSFT)
+# ew.q3$BRK_B.idx <- (q3.inv/num.sec)*(ew.q3$BRK_B)
+# ew.q3$JPM.idx <- (q3.inv/num.sec)*(ew.q3$JPM)
+
+
+ew.q3$NVDA.idx <- (q3.inv/num.sec)*(ew.q3$NVDA)  
 ew.q3$MSFT.idx <- (q3.inv/num.sec)*(ew.q3$MSFT)
+ew.q3$AAPL.idx <- (q3.inv/num.sec)*(ew.q3$AAPL)  
+ew.q3$NFLX.idx <- (q3.inv/num.sec)*(ew.q3$NFLX)
+
 ew.q3$BRK_B.idx <- (q3.inv/num.sec)*(ew.q3$BRK_B)
 ew.q3$JPM.idx <- (q3.inv/num.sec)*(ew.q3$JPM)
+ew.q3$C.idx <- (q3.inv/num.sec)*(ew.q3$C)
+ew.q3$BLK.idx <- (q3.inv/num.sec)*(ew.q3$BLK)
+
+ew.q3$MCD.idx <- (q3.inv/num.sec)*(ew.q3$MCD)
+ew.q3$SKX.idx <- (q3.inv/num.sec)*(ew.q3$SKX)
+ew.q3$SBUX.idx <- (q3.inv/num.sec)*(ew.q3$SBUX)
+ew.q3$NKE.idx <- (q3.inv/num.sec)*(ew.q3$NKE)
+
 
 
 ew.q3[c(1:3, nrow(ew.q3)), ]
@@ -1461,17 +1521,34 @@ ew.q4 <- subset(ewport,
                 ewport$date <= as.Date("2022-12-31"))
 ew.q4[c(1:3,nrow(ew.q4)),]
 
-columns_to_cumprod2 <- c("NVDA", "MSFT", "BRK_B", "JPM")
+columns_to_cumprod2 <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 ew.q4[columns_to_cumprod2] <- cumprod(ew.q4[columns_to_cumprod2])   ## Simplified previous code
 
 # Select specific rows and columns
 ew.q4[c(1:3, nrow(ew.q4)), ]
 
 
-ew.q4$NVDA.idx <- (q4.inv/num.sec)*(ew.q4$NVDA)
+# ew.q4$NVDA.idx <- (q4.inv/num.sec)*(ew.q4$NVDA)
+# ew.q4$MSFT.idx <- (q4.inv/num.sec)*(ew.q4$MSFT)
+# ew.q4$BRK_B.idx <- (q4.inv/num.sec)*(ew.q4$BRK_B)
+# ew.q4$JPM.idx <- (q4.inv/num.sec)*(ew.q4$JPM)
+# 
+# 
+
+ew.q4$NVDA.idx <- (q4.inv/num.sec)*(ew.q4$NVDA)  
 ew.q4$MSFT.idx <- (q4.inv/num.sec)*(ew.q4$MSFT)
+ew.q4$AAPL.idx <- (q4.inv/num.sec)*(ew.q4$AAPL)  
+ew.q4$NFLX.idx <- (q4.inv/num.sec)*(ew.q4$NFLX)
+
 ew.q4$BRK_B.idx <- (q4.inv/num.sec)*(ew.q4$BRK_B)
 ew.q4$JPM.idx <- (q4.inv/num.sec)*(ew.q4$JPM)
+ew.q4$C.idx <- (q4.inv/num.sec)*(ew.q4$C)
+ew.q4$BLK.idx <- (q4.inv/num.sec)*(ew.q4$BLK)
+
+ew.q4$MCD.idx <- (q4.inv/num.sec)*(ew.q4$MCD)
+ew.q4$SKX.idx <- (q4.inv/num.sec)*(ew.q4$SKX)
+ew.q4$SBUX.idx <- (q4.inv/num.sec)*(ew.q4$SBUX)
+ew.q4$NKE.idx <- (q4.inv/num.sec)*(ew.q4$NKE)
 
 
 ew.q4[c(1:3, nrow(ew.q4)), ]
@@ -1503,7 +1580,10 @@ Value-Weighted Portfolio
 
 
 ```{r}
-vwport <-port.df.2022[,-c(2:5)]
+nsecurities = 12
+
+
+vwport <-port.df.2022[,-c(2:(nsecurities+1))]
 vwport[c(1:3,nrow(vwport)),]
 
 
@@ -1515,8 +1595,21 @@ Converting Net Returns to Gross Returns
 ```{r}
 vwport$NVDA.ret <- 1+vwport$NVDA.ret
 vwport$MSFT.ret <- 1+vwport$MSFT.ret
+vwport$AAPL.ret <- 1+vwport$AAPL.ret
+vwport$NFLX.ret <- 1+vwport$NFLX.ret
+
 vwport$BRK_B.ret <- 1+vwport$BRK_B.ret
 vwport$JPM.ret <- 1+vwport$JPM.ret
+vwport$C.ret <- 1+vwport$C.ret
+vwport$BLK.ret <- 1+vwport$BLK.ret
+
+vwport$MCD.ret <- 1+vwport$MCD.ret
+vwport$SKX.ret <- 1+vwport$SKX.ret
+vwport$SBUX.ret <- 1+vwport$SBUX.ret
+vwport$NKE.ret <- 1+vwport$NKE.ret
+
+
+
 vwport[c(1:3,nrow(vwport)),]
 ```
 
@@ -1526,7 +1619,7 @@ Construct a series of calendar days
 
 ```{r}
 
-date <- seq(as.Date("2011-12-30"),as.Date("2022-12-31"),by=1)
+date <- seq(as.Date("2021-12-31"),as.Date("2022-12-31"),by=1)
 date <- data.frame(date)
 date[c(1:3,nrow(date)),]
 
@@ -1537,7 +1630,7 @@ Calculate the market capitalization of each security in the portfolio
 
 Create data object with daily prices, filling in last avialable price on non-trading days
 ```{r}
-PRICE.qtr <- vwport[,c(1:5)]
+PRICE.qtr <- vwport[,c(1:(nsecurities+1))]
 PRICE.qtr[c(1:3,nrow(PRICE.qtr)),]
 colnames(PRICE.qtr)[colnames(PRICE.qtr) == "Date"] <- "date"
 PRICE.qtr[c(1:3,nrow(PRICE.qtr)),]
@@ -1582,18 +1675,6 @@ https://www.sec.gov/edgar/browse/?CIK=1018724&owner=exclude
 
 Enter the data manually
 
-AMZN: 
-Number of shares of common stock outstanding as of January 18, 2013=454,551,069
-455,242,694 shares of common stock, par value $0.01 per share, outstanding as of April 12, 2013
-456,883,519 shares of common stock, par value $0.01 per share, outstanding as of July 12, 2013
-457,733,620 shares of common stock, par value $0.01 per share, outstanding as of October 11, 2013
-
-
-
-
-PRICE.qtr$AMZN.shout <- c(454000000,455000000,457000000,458000000)
-PRICE.qtr$AAPL.shout <- c(1115233000,1084766000,1065046000,1013059000)
-PRICE.qtr$IBM.shout <- c(1117367676,1108794396,1095425823,1085854383)
 
 <!-- ```{r} -->
 <!-- library(edgarWebR) -->
@@ -1611,39 +1692,129 @@ PRICE.qtr$IBM.shout <- c(1117367676,1108794396,1095425823,1085854383)
 
 
 NVDA: https://www.sec.gov/edgar/browse/?CIK=1045810&owner=exclude
-March 9, 2022: The number of shares of common stock outstanding as of March 9, 2022 was 616,028,107
-May 18, 2022: The number of shares of common stock, $0.001 par value, outstanding as of May 18, 2022, was 618,804,109
-August 17, 2022: The number of shares of common stock, $0.001 par value, outstanding as of August 17, 2022, was 619,476,242 .
-November 16, 2022: The number of shares of common stock, $0.001 par value, outstanding as of November 16, 2022, was 624,850,798 .
-
+March 11, 2022: The number of shares of common stock outstanding as of March 11, 2022 was 2.51 billion
+May 20, 2022: The number of shares of common stock, $0.001 par value, outstanding as of May 20, 2022, was 2.50 billion.
+August 19, 2022: The number of shares of common stock, $0.001 par value, outstanding as of August 19, 2022, was 2.49 billion.
+November 11, 2022: TThe number of shares of common stock, $0.001 par value, outstanding as of November 11, 2022, was 2.46 billion .
 
 
 MSFT: https://www.sec.gov/edgar/browse/?CIK=789019&owner=exclude
-Jan 2022: Class	Outstanding at January 17, 2022	Common Stock, $0.00000625 par value per share 8,390,771,388 shares	 
-Apr 2022: Class Outstanding at April 17, 2022 Common Stock, $0.00000625 par value per share 8,400,866,103 shares	
-July 18, 2022, there were 8,383,396,575 shares of common stock outstanding.
-October 15, 2022 Common Stock, $0.00000625 par value per share 8,416,462,491 shares
+Jan 20, 2022: Common Stock, $0.00000625 par value per share 7,496,866,428 shares
+Apr 21, 2022: Common Stock, $0.00000625 par value per share  7,479,033,135 shares
+July 25, 2022: As of July 25, 2022, there were 7,457,891,872 shares of common stock outstanding.
+October 20, 2022 Common Stock, $0.00000625 par value per share 7,454,473,144 shares
+
+
+AAPL: https://www.sec.gov/edgar/browse/?CIK=320193&owner=exclude
+Jan 14, 2022: 16,319,441,000 shares of common stock were issued and outstanding as of January 14, 2022.
+Apr 15, 2022: 16,185,181,000 shares of common stock were issued and outstanding as of April 15, 2022.
+July 15, 2022: 16,070,752,000 shares of common stock were issued and outstanding as of July 15, 2022.
+October 14, 2022: 15,908,118,000 shares of common stock were issued and outstanding as of October 14, 2022.
+
+
+NFLX: https://www.sec.gov/edgar/browse/?CIK=1065280&owner=exclude
+Dec 31, 2021: As of December 31, 2021, there were 443,963,107 shares of the registrant’s common stock, par value $0.001, outstanding.
+Mar 21, 2022: As of March 31, 2022, there were 444,273,850 shares of the registrant’s common stock, par value $0.001, outstanding.
+Jun 30, 2022: As of June 30, 2022, there were 444,705,591 shares of the registrant’s common stock, par value $0.001, outstanding.
+Sep 30, 2022: As of September 30, 2022, there were 445,020,494 shares of the registrant’s common stock, par value $0.001, outstanding.
+
+
+
+PRICE.qtr$NVDA.shout <- c(2.51e9,2.50e9,2.49e9,2.46e9)
+PRICE.qtr$MSFT.shout <- c(7496866428 ,7479033135 ,7457891872 ,7454473144)
+PRICE.qtr$AAPL.shout <- c(16319441000 ,16185181000 ,16070752000 ,15908118000)
+PRICE.qtr$NFLX.shout <- c(443963107,444273850,444705591,445020494)
+
+
+
 
 
 BRK_B: https://www.sec.gov/edgar/browse/?CIK=1067983&owner=exclude
-February 15, 2022—Class B common stock, $0.0033 par value 1,072,262,656 shares	  
-April 27, 2022: Number of shares of common stock outstanding as of April 27, 2022, Class A —     930,998, Class B —  1,080,368,809
-July 26, 2022: Number of shares of common stock outstanding as of July 26, 2022, Class A — 927,848, Class B —  1,086,380,702
-October 25, 2022: Number of shares of common stock outstanding as of October 25, 2022, Class A — 919,298	Class B —	1,099,792,631	  
-
-
+February 14, 2022—Class B common stock, $0.0033 par value 1,291,212,661 shares
+April 20, 2022: Number of shares of common stock outstanding as of April 20, 2022:    Class B —  1,285,751,332  
+July 26, 2022: Number of shares of common stock outstanding as of July 26, 2022: Class B —  1,301,126,370  
+October 2, 2022: Number of shares of common stock outstanding as of October 26, 2022: 	Class B — 1,301,981,370  	  
 
 JPM: https://www.sec.gov/edgar/browse/?CIK=19617&owner=exclude
-January 31, 2022: Number of shares of common stock outstanding as of January 31, 2022: 3,817,360,407
-April 30, 2022: Number of shares of common stock outstanding as of April 30, 2022: 3,806,666,475
-July 31, 2022: Number of shares of common stock outstanding as of July 31, 2022: 3,798,753,657
-October 31, 2022: Number of shares of common stock outstanding as of October 31, 2022: 3,801,401,625
+January 31, 2022: Number of shares of common stock outstanding as of January 31, 2022: 2,952,808,970
+March 31, 2022: Number of shares of common stock outstanding as of March 31, 2022: 2,937,050,466
+June 30, 2022: Number of shares of common stock outstanding as of June 30, 2022: 2,932,572,390
+September 30, 2022: Number of shares of common stock outstanding as of September 30, 2022: 2,933,204,888
+
+C: https://www.sec.gov/edgar/browse/?CIK=831001&owner=exclude
+January 31, 2022: Number of shares of Citigroup Inc. common stock outstanding on January 31, 2022: 1,980,894,613
+March 31, 2022: Number of shares of Citigroup Inc. common stock outstanding on March 31, 2022: 1,941,920,542
+June 30, 2022:Number of shares of Citigroup Inc. common stock outstanding on June 30, 2022: 1,936,709,623
+September 30, 2022: Number of shares of Citigroup Inc. common stock outstanding on September 30, 2022: 1,936,852,864
+
+BLK: https://www.sec.gov/edgar/browse/?CIK=1364742&owner=exclude
+As of January 31, 2022, there were 152,042,401 shares of the registrant’s common stock outstanding.
+As of April 30, 2022, there were 151,503,255 shares of the registrant’s common stock outstanding.
+As of July 31, 2022, there were 150,768,739 shares of the registrant’s common stock outstanding.
+As of October 31, 2022, there were 150,195,577 shares of the registrant’s common stock outstanding. 
+
+
+PRICE.qtr$BRK_B.shout <- c(1291212661,1285751332 ,1301126370 ,1301981370)
+PRICE.qtr$JPM.shout <- c(2952808970 ,2937050466 ,2932572390 ,2933204888)
+PRICE.qtr$C.shout <- c(1980894613 ,1941920542 ,1936709623 ,1936852864)
+PRICE.qtr$BLK.shout <- c(152042401 ,151503255 ,150768739 ,150195577)
+
+
+MCD: https://www.sec.gov/edgar/browse/?CIK=63908&owner=exclude
+January 31, 2022: The number of shares outstanding of the registrant’s common stock as of January 31, 2022: 743,584,718.
+March 31, 2022: Number of shares of common stock outstanding as of March 31, 2022: 739,546,930
+June 30, 2022: Number of shares of common stock outstanding as of June 30, 2022: 735,717,271	
+Sept 30, 2022 Number of shares of common stock outstanding as of 9/30/2022: 732,423,892
+
+
+SKX: https://www.sec.gov/edgar/browse/?CIK=1065837&owner=exclude
+February 15, 2022: The number of shares of Class A Common Stock outstanding as of February 15, 2022: 135,107,264.
+February 15, 2022: The number of shares of Class B Common Stock outstanding as of February 15, 2022: 20,938,571.
+April 28, 2022: As of April 28, 2022, 134,881,830 shares of the registrant’s Class A Common Stock, $0.001 par value per share, were outstanding.
+April 28, 2022: As of April 28, 2022, 20,888,571 shares of the registrant’s Class B Common Stock, $0.001 par value per share, were outstanding.
+July 29, 2022: As of July 29, 2022, 134,844,529 shares of the registrant’s Class A Common Stock, $0.001 par value per share, were outstanding.
+July 29, 2022: As of July 29, 2022, 20,888,571 shares of the registrant’s Class B Common Stock, $0.001 par value per share, were outstanding.
+October 28, 2022: As of October 28, 2022, 134,212,238 shares of the registrant’s Class A Common Stock, $0.001 par value per share, were outstanding.
+October 28, 2022: As of October 28, 2022, 20,888,571 shares of the registrant’s Class B Common Stock, $0.001 par value per share, were outstanding.
+
+SBUX: https://www.sec.gov/edgar/browse/?CIK=829224&owner=exclude
+January 26, 2022: Shares Outstanding as of January 26, 2022: 1,150.3 million
+April 27, 2022: Shares Outstanding as of April 27, 2022: 1,146.9 million
+July 27, 2022: Shares Outstanding as of July 27, 2022: 1,147.4 million
+November 11, 2022: As of November 11, 2022, there were 1,147.8 million shares of the registrant’s Common Stock outstanding.
+
+
+NKE: 
+As of December 27, 2021, the number of shares of the Registrant's Common Stock outstanding were: Class A 305,007,252 	Class B 1,276,288,021 = 1,581,295,273 	
+As of March 28, 2022, the number of shares of the Registrant's Common Stock outstanding were: Class A 305,007,252 Class B 1,268,760,217= 1,573,767,469 	
+As of July 8, 2022, the number of shares of the Registrant's Common Stock outstanding were: Class A 304,903,252 Class B 1,263,652,653 = 1,568,555,905 	
+As of September 29, 2022, the number of shares of the Registrant's Common Stock outstanding were: Class A 304,903,252 Class B 1,259,687,689 = 1,564,590,941 	
+  
+ 
+ 
+
+PRICE.qtr$MCD.shout <- c(743584718,739546930 ,735717271 ,732423892)
+PRICE.qtr$SKX.shout <- c(135107264 ,134881830 ,134844529 ,134212238)
+PRICE.qtr$SBUX.shout <- c(1150300000 ,1146900000 ,1147400000 ,1147800000)
+PRICE.qtr$NKE.shout <- c(1276288021 ,1268760217 ,1263,652653 ,1259687689)
+
 
 ```{r}
-PRICE.qtr$NVDA.shout <- c(616028107,618804109,619476242,624850798)
-PRICE.qtr$MSFT.shout <- c(8390771388,8400866103 ,8383396575,8416462491)
-PRICE.qtr$BRK_B.shout <- c(1072262656,1080368809,1086380702,1099792631)
-PRICE.qtr$JPM.shout <- c(3817360407,3806666475,3798753657,3801401625)
+PRICE.qtr$NVDA.shout <- c(2.51e9,2.50e9,2.49e9,2.46e9)
+PRICE.qtr$MSFT.shout <- c(7496866428 ,7479033135 ,7457891872 ,7454473144)
+PRICE.qtr$AAPL.shout <- c(16319441000 ,16185181000 ,16070752000 ,15908118000)
+PRICE.qtr$NFLX.shout <- c(443963107,444273850,444705591,445020494)
+
+PRICE.qtr$BRK_B.shout <- c(1291212661,1285751332 ,1301126370 ,1301981370)
+PRICE.qtr$JPM.shout <- c(2952808970 ,2937050466 ,2932572390 ,2933204888)
+PRICE.qtr$C.shout <- c(1980894613 ,1941920542 ,1936709623 ,1936852864)
+PRICE.qtr$BLK.shout <- c(152042401 ,151503255 ,150768739 ,150195577)
+
+PRICE.qtr$MCD.shout <- c(743584718,739546930 ,735717271 ,732423892)
+PRICE.qtr$SKX.shout <- c(135107264 ,134881830 ,134844529 ,134212238)
+PRICE.qtr$SBUX.shout <- c(1150300000 ,1146900000 ,1147400000 ,1147800000)
+PRICE.qtr$NKE.shout <- c(1276288021 ,1268760217 ,1263652653 ,1259687689)
+
 PRICE.qtr
 
 ```
@@ -1662,8 +1833,21 @@ To make the data object name more sensible to hold the weights of the securities
 weights <- PRICE.qtr
 weights$NVDA.mcap <- weights$NVDA.Close*weights$NVDA.shout
 weights$MSFT.mcap <- weights$MSFT.Close*weights$MSFT.shout
+weights$AAPL.mcap <- weights$AAPL.Close*weights$AAPL.shout
+weights$NFLX.mcap <- weights$NFLX.Close*weights$NFLX.shout
+
 weights$BRK_B.mcap <- weights$BRK_B.Close*weights$BRK_B.shout
 weights$JPM.mcap <- weights$JPM.Close*weights$JPM.shout
+weights$C.mcap <- weights$C.Close*weights$C.shout
+weights$BLK.mcap <- weights$BLK.Close*weights$BLK.shout
+
+weights$MCD.mcap <- weights$MCD.Close*weights$MCD.shout
+weights$SKX.mcap <- weights$SKX.Close*weights$SKX.shout
+weights$SBUX.mcap <- weights$SBUX.Close*weights$SBUX.shout
+weights$NKE.mcap <- weights$NKE.Close*weights$NKE.shout
+
+
+
 weights
 ```
 Market cap is equal to the price multiplied by the outstanding shares
@@ -1671,7 +1855,7 @@ Calculate quarter-end aggregate market capitalization
 
 -Apply the rowSums command to the three market capitalization variables (8-10)
 ```{r}
-weights$tot.mcap <- rowSums(weights[(ncol(weights)-3):ncol(weights)])
+weights$tot.mcap <- rowSums(weights[(ncol(weights)-(nsecurities-1)):ncol(weights)])
 weights
 
 ```
@@ -1681,12 +1865,24 @@ Divide each security’s market cap by the combined market cap of the three secu
 ```{r}
 weights$NVDA.wgt <- weights$NVDA.mcap/weights$tot.mcap
 weights$MSFT.wgt <- weights$MSFT.mcap/weights$tot.mcap
+weights$AAPL.wgt <- weights$AAPL.mcap/weights$tot.mcap
+weights$NFLX.wgt <- weights$NFLX.mcap/weights$tot.mcap
+
 weights$BRK_B.wgt <- weights$BRK_B.mcap/weights$tot.mcap
 weights$JPM.wgt <- weights$JPM.mcap/weights$tot.mcap
+weights$C.wgt <- weights$C.mcap/weights$tot.mcap
+weights$BLK.wgt <- weights$BLK.mcap/weights$tot.mcap
+
+weights$MCD.wgt <- weights$MCD.mcap/weights$tot.mcap
+weights$SKX.wgt <- weights$SKX.mcap/weights$tot.mcap
+weights$SBUX.wgt <- weights$SBUX.mcap/weights$tot.mcap
+weights$NKE.wgt <- weights$NKE.mcap/weights$tot.mcap
+
+
 weights
 
 
-WEIGHT <- weights[,c(1,(ncol(weights)-3):ncol(weights))]
+WEIGHT <- weights[,c(1,(ncol(weights)-11):ncol(weights))]
 WEIGHT
 
 ```
@@ -1704,74 +1900,84 @@ Create series of dates to find the applicable weights at the beginning of each q
 
 ```{r}
 
-date <- seq(as.Date("2011-12-31"),as.Date("2012-12-31"),by=1)
+date <- seq(as.Date("2021-12-31"),as.Date("2022-12-31"),by=1)
 date <- data.frame(date)
 date[c(1:3,nrow(date)),]
 
 ```
+
+
 ```{r}
 vwret <- na.locf(merge(date,WEIGHT,by="date",all.x=TRUE))
 vwret[c(1:3,nrow(vwret)),] 
 ```
+
+
 Check date as.date and wgt as.num
 ```{r}
 str(vwret)
 
 ```
+
+
+
 ```{r}
-q1.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-01-01"))  ## 2012-01-02 was new years day holiday. 01/01 was Sunday
+q1.vw.wgt <- subset(vwret,vwret$date==as.Date("2022-01-01"))  ## 2012-01-02 was new years day holiday. 01/01 was Sunday
 q1.vw.wgt
-q2.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-04-01"))
+q2.vw.wgt <- subset(vwret,vwret$date==as.Date("2022-04-01"))
 q2.vw.wgt
-q3.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-07-01"))
+q3.vw.wgt <- subset(vwret,vwret$date==as.Date("2022-07-01"))
 q3.vw.wgt
-q4.vw.wgt <- subset(vwret,vwret$date==as.Date("2012-10-01"))
+q4.vw.wgt <- subset(vwret,vwret$date==as.Date("2022-10-01"))
 q4.vw.wgt
 
 ```
+
+
 ```{r}
+
 Q1.pie.values <- as.numeric(q1.vw.wgt[,-1])
-Q1.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+Q1.pie.labels <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 pct <- round(Q1.pie.values*100)
 Q1.pie.labels <- paste(Q1.pie.labels,pct) #Add pct
 Q1.pie.labels <- paste(Q1.pie.labels,"%",sep="") #Add % sign
 pie(Q1.pie.values,
     labels=Q1.pie.labels,
-    col=c("red","blue","green","yellow"),
+    col=1:12,
     main="Q1 Value Weigthing")
 
 
 Q2.pie.values <- as.numeric(q2.vw.wgt[,-1])
-Q2.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+Q2.pie.labels <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 pct <- round(Q2.pie.values*100)
 Q2.pie.labels <- paste(Q2.pie.labels,pct) #Add pct
 Q2.pie.labels <- paste(Q2.pie.labels,"%",sep="") #Add % sign
 pie(Q2.pie.values,
     labels=Q2.pie.labels,
-    col=c("red","blue","green","yellow"),
+    col=1:12,
     main="Q2 Value Weigthing")
 
+
 Q3.pie.values <- as.numeric(q3.vw.wgt[,-1])
-Q3.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+Q3.pie.labels <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 pct <- round(Q3.pie.values*100)
 Q3.pie.labels <- paste(Q3.pie.labels,pct) #Add pct
 Q3.pie.labels <- paste(Q3.pie.labels,"%",sep="") #Add % sign
 pie(Q3.pie.values,
     labels=Q3.pie.labels,
-    col=c("red","blue","green","yellow"),
+    col=1:12,
     main="Q3 Value Weigthing")
 
 
 Q4.pie.values <- as.numeric(q4.vw.wgt[,-1])
-Q4.pie.labels <- c("NVDA","MSFT","BRK_B","JPM")
+Q4.pie.labels <- c("NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")
 pct <- round(Q4.pie.values*100)
 Q4.pie.labels <- paste(Q4.pie.labels,pct) #Add pct
 Q4.pie.labels <- paste(Q4.pie.labels,"%",sep="") #Add % sign
 pie(Q4.pie.values,
     labels=Q4.pie.labels,
-    col=c("red","blue","green","yellow"),
+    col=1:12,
     main="Q4 Value Weigthing")
-
 
 
 ```
@@ -1781,30 +1987,52 @@ Subset vwport to the data from Dec 31, 2011 to March 31, 2012
 
 ```{r}
 
-vw.q1 <- subset(vwport[,c(1,6:9)], 
-                vwport$Date >= as.Date("2011-12-30") &
-                vwport$Date <= as.Date("2012-03-31"))
-names(vw.q1) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q1 <- subset(vwport[,c(1,(ncol(vwport)-(nsecurities-1)):ncol(vwport))], 
+                vwport$Date >= as.Date("2021-12-31") &
+                vwport$Date <= as.Date("2022-03-31"))
+names(vw.q1) <- paste(c("date","NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")) # shorten the names
 vw.q1[c(1:3,nrow(vw.q1)),]
 
 
 vw.q1[1,2:ncol(vw.q1)] <-1  ### delete fisrt row because it lies in q4 of last year 
 vw.q1$NVDA <- cumprod(vw.q1$NVDA)
 vw.q1$MSFT <- cumprod(vw.q1$MSFT)
+vw.q1$AAPL <- cumprod(vw.q1$AAPL)
+vw.q1$NFLX <- cumprod(vw.q1$NFLX)
+
 vw.q1$BRK_B <- cumprod(vw.q1$BRK_B)
 vw.q1$JPM <- cumprod(vw.q1$JPM)
+vw.q1$C <- cumprod(vw.q1$C)
+vw.q1$BLK <- cumprod(vw.q1$BLK)
+
+vw.q1$MCD <- cumprod(vw.q1$MCD)
+vw.q1$SKX <- cumprod(vw.q1$SKX)
+vw.q1$SBUX <- cumprod(vw.q1$SBUX)
+vw.q1$NKE <- cumprod(vw.q1$NKE)
+
 vw.q1[c(1:3,nrow(vw.q1)),]
 
 
 vw.q1$NVDA.idx <- (1*q1.vw.wgt$NVDA.wgt)*vw.q1$NVDA
 vw.q1$MSFT.idx <- (1*q1.vw.wgt$MSFT.wgt)*vw.q1$MSFT
+vw.q1$AAPL.idx <- (1*q1.vw.wgt$AAPL.wgt)*vw.q1$AAPL
+vw.q1$NFLX.idx <- (1*q1.vw.wgt$NFLX.wgt)*vw.q1$NFLX
+
 vw.q1$BRK_B.idx <- (1*q1.vw.wgt$BRK_B.wgt)*vw.q1$BRK_B
 vw.q1$JPM.idx <- (1*q1.vw.wgt$JPM.wgt)*vw.q1$JPM
+vw.q1$C.idx <- (1*q1.vw.wgt$C.wgt)*vw.q1$C
+vw.q1$BLK.idx <- (1*q1.vw.wgt$BLK.wgt)*vw.q1$BLK
+
+vw.q1$MCD.idx <- (1*q1.vw.wgt$MCD.wgt)*vw.q1$MCD
+vw.q1$SKX.idx <- (1*q1.vw.wgt$SKX.wgt)*vw.q1$SKX
+vw.q1$SBUX.idx <- (1*q1.vw.wgt$SBUX.wgt)*vw.q1$SBUX
+vw.q1$NKE.idx <- (1*q1.vw.wgt$NKE.wgt)*vw.q1$NKE
+
 vw.q1[c(1:3,nrow(vw.q1)),]
 
 
 
-q1.vw.val <- data.frame(rowSums(vw.q1[,(ncol(vw.q1)-3):ncol(vw.q1)]))
+q1.vw.val <- data.frame(rowSums(vw.q1[,(ncol(vw.q1)-(nsecurities-1)):ncol(vw.q1)]))
 q1.vw.val[c(1:3,nrow(q1.vw.val)),]
 
 names(q1.vw.val) <- paste("port.val")
@@ -1813,40 +2041,60 @@ q1.vw.val[c(1:3,nrow(q1.vw.val)),]
 
 
 
-q2.vw.inv <- q1.vw.val[nrow(q1.vw.val),1]
-q2.vw.inv
+q1.vw.inv <- q1.vw.val[nrow(q1.vw.val),1]
+q1.vw.inv
 ```
 
 
-Subset vwport to the data from Mar 2012 to Jun 2012
-
-
+Subset vwport to the data from Mar 2022 to Jun 2022
 ```{r}
 
-vw.q2<- subset(vwport[,c(1,6:9)], 
-                vwport$Date >= as.Date("2012-04-01") &
-                vwport$Date <= as.Date("2012-06-30"))
-names(vw.q2) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q2 <- subset(vwport[,c(1,(ncol(vwport)-(nsecurities-1)):ncol(vwport))], 
+                vwport$Date >= as.Date("2022-04-01") &
+                vwport$Date <= as.Date("2022-06-30"))
+names(vw.q2) <- paste(c("date","NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")) # shorten the names
 vw.q2[c(1:3,nrow(vw.q2)),]
 
 
-# vw.q2[1,2:ncol(vw.q2)] <-1     
+# vw.q2[1,2:ncol(vw.q2)] <-1  ### delete fisrt row because it lies in q4 of last year 
 vw.q2$NVDA <- cumprod(vw.q2$NVDA)
 vw.q2$MSFT <- cumprod(vw.q2$MSFT)
+vw.q2$AAPL <- cumprod(vw.q2$AAPL)
+vw.q2$NFLX <- cumprod(vw.q2$NFLX)
+
 vw.q2$BRK_B <- cumprod(vw.q2$BRK_B)
 vw.q2$JPM <- cumprod(vw.q2$JPM)
+vw.q2$C <- cumprod(vw.q2$C)
+vw.q2$BLK <- cumprod(vw.q2$BLK)
+
+vw.q2$MCD <- cumprod(vw.q2$MCD)
+vw.q2$SKX <- cumprod(vw.q2$SKX)
+vw.q2$SBUX <- cumprod(vw.q2$SBUX)
+vw.q2$NKE <- cumprod(vw.q2$NKE)
+
 vw.q2[c(1:3,nrow(vw.q2)),]
 
 
 vw.q2$NVDA.idx <- (1*q2.vw.wgt$NVDA.wgt)*vw.q2$NVDA
 vw.q2$MSFT.idx <- (1*q2.vw.wgt$MSFT.wgt)*vw.q2$MSFT
+vw.q2$AAPL.idx <- (1*q2.vw.wgt$AAPL.wgt)*vw.q2$AAPL
+vw.q2$NFLX.idx <- (1*q2.vw.wgt$NFLX.wgt)*vw.q2$NFLX
+
 vw.q2$BRK_B.idx <- (1*q2.vw.wgt$BRK_B.wgt)*vw.q2$BRK_B
 vw.q2$JPM.idx <- (1*q2.vw.wgt$JPM.wgt)*vw.q2$JPM
+vw.q2$C.idx <- (1*q2.vw.wgt$C.wgt)*vw.q2$C
+vw.q2$BLK.idx <- (1*q2.vw.wgt$BLK.wgt)*vw.q2$BLK
+
+vw.q2$MCD.idx <- (1*q2.vw.wgt$MCD.wgt)*vw.q2$MCD
+vw.q2$SKX.idx <- (1*q2.vw.wgt$SKX.wgt)*vw.q2$SKX
+vw.q2$SBUX.idx <- (1*q2.vw.wgt$SBUX.wgt)*vw.q2$SBUX
+vw.q2$NKE.idx <- (1*q2.vw.wgt$NKE.wgt)*vw.q2$NKE
+
 vw.q2[c(1:3,nrow(vw.q2)),]
 
 
 
-q2.vw.val <- data.frame(rowSums(vw.q2[,(ncol(vw.q2)-3):ncol(vw.q2)]))
+q2.vw.val <- data.frame(rowSums(vw.q2[,(ncol(vw.q2)-(nsecurities-1)):ncol(vw.q2)]))
 q2.vw.val[c(1:3,nrow(q2.vw.val)),]
 
 names(q2.vw.val) <- paste("port.val")
@@ -1859,35 +2107,55 @@ q2.vw.inv <- q2.vw.val[nrow(q2.vw.val),1]
 q2.vw.inv
 ```
 
-Subset vwport to the data from Jul 2012 to Sep 2012
-
-
+Subset vwport to the data from Jul 2022 to Sep 2022
 ```{r}
 
-vw.q3<- subset(vwport[,c(1,6:9)], 
-                vwport$Date >= as.Date("2012-07-01") &
-                vwport$Date <= as.Date("2012-09-30"))
-names(vw.q3) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q3 <- subset(vwport[,c(1,(ncol(vwport)-(nsecurities-1)):ncol(vwport))], 
+                vwport$Date >= as.Date("2022-07-01") &
+                vwport$Date <= as.Date("2022-09-30"))
+names(vw.q3) <- paste(c("date","NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")) # shorten the names
 vw.q3[c(1:3,nrow(vw.q3)),]
 
 
-# vw.q3[1,2:ncol(vw.q3)] <-1 
+# vw.q3[1,2:ncol(vw.q3)] <-1  ### delete fisrt row because it lies in q4 of last year 
 vw.q3$NVDA <- cumprod(vw.q3$NVDA)
 vw.q3$MSFT <- cumprod(vw.q3$MSFT)
+vw.q3$AAPL <- cumprod(vw.q3$AAPL)
+vw.q3$NFLX <- cumprod(vw.q3$NFLX)
+
 vw.q3$BRK_B <- cumprod(vw.q3$BRK_B)
 vw.q3$JPM <- cumprod(vw.q3$JPM)
+vw.q3$C <- cumprod(vw.q3$C)
+vw.q3$BLK <- cumprod(vw.q3$BLK)
+
+vw.q3$MCD <- cumprod(vw.q3$MCD)
+vw.q3$SKX <- cumprod(vw.q3$SKX)
+vw.q3$SBUX <- cumprod(vw.q3$SBUX)
+vw.q3$NKE <- cumprod(vw.q3$NKE)
+
 vw.q3[c(1:3,nrow(vw.q3)),]
 
 
 vw.q3$NVDA.idx <- (1*q3.vw.wgt$NVDA.wgt)*vw.q3$NVDA
 vw.q3$MSFT.idx <- (1*q3.vw.wgt$MSFT.wgt)*vw.q3$MSFT
+vw.q3$AAPL.idx <- (1*q3.vw.wgt$AAPL.wgt)*vw.q3$AAPL
+vw.q3$NFLX.idx <- (1*q3.vw.wgt$NFLX.wgt)*vw.q3$NFLX
+
 vw.q3$BRK_B.idx <- (1*q3.vw.wgt$BRK_B.wgt)*vw.q3$BRK_B
-vw.q3$JPM.idx <- (1*q3.vw.wgt$JPM.wgt)*vw.q3$JPM
+vw.q3$JPM.idx <-   (1*q3.vw.wgt$JPM.wgt)*vw.q3$JPM
+vw.q3$C.idx <-     (1*q3.vw.wgt$C.wgt)*vw.q3$C
+vw.q3$BLK.idx <-   (1*q3.vw.wgt$BLK.wgt)*vw.q3$BLK
+
+vw.q3$MCD.idx <- (1*q3.vw.wgt$MCD.wgt)*vw.q3$MCD
+vw.q3$SKX.idx <- (1*q3.vw.wgt$SKX.wgt)*vw.q3$SKX
+vw.q3$SBUX.idx <- (1*q3.vw.wgt$SBUX.wgt)*vw.q3$SBUX
+vw.q3$NKE.idx <- (1*q3.vw.wgt$NKE.wgt)*vw.q3$NKE
+
 vw.q3[c(1:3,nrow(vw.q3)),]
 
 
 
-q3.vw.val <- data.frame(rowSums(vw.q3[,(ncol(vw.q3)-3):ncol(vw.q3)]))
+q3.vw.val <- data.frame(rowSums(vw.q3[,(ncol(vw.q3)-(nsecurities-1)):ncol(vw.q3)]))
 q3.vw.val[c(1:3,nrow(q3.vw.val)),]
 
 names(q3.vw.val) <- paste("port.val")
@@ -1900,35 +2168,58 @@ q3.vw.inv <- q3.vw.val[nrow(q3.vw.val),1]
 q3.vw.inv
 ```
 
+
 Subset vwport to the data from Oct 2012 to Dec 2012
 
 
 ```{r}
 
-vw.q4<- subset(vwport[,c(1,6:9)], 
-                vwport$Date >= as.Date("2012-10-01") &
-                vwport$Date <= as.Date("2012-12-31"))
-names(vw.q4) <- paste(c("date","NVDA","MSFT","BRK_B","JPM")) # shorten the names
+vw.q4 <- subset(vwport[,c(1,(ncol(vwport)-(nsecurities-1)):ncol(vwport))], 
+                vwport$Date >= as.Date("2022-10-01") &
+                vwport$Date <= as.Date("2022-12-31"))
+names(vw.q4) <- paste(c("date","NVDA","MSFT","AAPL","NFLX","BRK_B","JPM","C","BLK","MCD","SKX","SBUX","NKE")) # shorten the names
 vw.q4[c(1:3,nrow(vw.q4)),]
 
 
-# vw.q4[1,2:ncol(vw.q4)] <-1 
+# vw.q3[1,2:ncol(vw.q3)] <-1  ### delete fisrt row because it lies in q4 of last year 
 vw.q4$NVDA <- cumprod(vw.q4$NVDA)
 vw.q4$MSFT <- cumprod(vw.q4$MSFT)
+vw.q4$AAPL <- cumprod(vw.q4$AAPL)
+vw.q4$NFLX <- cumprod(vw.q4$NFLX)
+
 vw.q4$BRK_B <- cumprod(vw.q4$BRK_B)
 vw.q4$JPM <- cumprod(vw.q4$JPM)
+vw.q4$C <- cumprod(vw.q4$C)
+vw.q4$BLK <- cumprod(vw.q4$BLK)
+
+vw.q4$MCD <- cumprod(vw.q4$MCD)
+vw.q4$SKX <- cumprod(vw.q4$SKX)
+vw.q4$SBUX <- cumprod(vw.q4$SBUX)
+vw.q4$NKE <- cumprod(vw.q4$NKE)
+
 vw.q4[c(1:3,nrow(vw.q4)),]
 
 
 vw.q4$NVDA.idx <- (1*q4.vw.wgt$NVDA.wgt)*vw.q4$NVDA
 vw.q4$MSFT.idx <- (1*q4.vw.wgt$MSFT.wgt)*vw.q4$MSFT
+vw.q4$AAPL.idx <- (1*q4.vw.wgt$AAPL.wgt)*vw.q4$AAPL
+vw.q4$NFLX.idx <- (1*q4.vw.wgt$NFLX.wgt)*vw.q4$NFLX
+
 vw.q4$BRK_B.idx <- (1*q4.vw.wgt$BRK_B.wgt)*vw.q4$BRK_B
 vw.q4$JPM.idx <- (1*q4.vw.wgt$JPM.wgt)*vw.q4$JPM
+vw.q4$C.idx <- (1*q4.vw.wgt$C.wgt)*vw.q4$C
+vw.q4$BLK.idx <- (1*q4.vw.wgt$BLK.wgt)*vw.q4$BLK
+
+vw.q4$MCD.idx <- (1*q4.vw.wgt$MCD.wgt)*vw.q4$MCD
+vw.q4$SKX.idx <- (1*q4.vw.wgt$SKX.wgt)*vw.q4$SKX
+vw.q4$SBUX.idx <- (1*q4.vw.wgt$SBUX.wgt)*vw.q4$SBUX
+vw.q4$NKE.idx <- (1*q4.vw.wgt$NKE.wgt)*vw.q4$NKE
+
 vw.q4[c(1:3,nrow(vw.q4)),]
 
 
 
-q4.vw.val <- data.frame(rowSums(vw.q4[,(ncol(vw.q4)-3):ncol(vw.q4)]))
+q4.vw.val <- data.frame(rowSums(vw.q4[,(ncol(vw.q4)-(nsecurities-1)):ncol(vw.q4)]))
 q4.vw.val[c(1:3,nrow(q4.vw.val)),]
 
 names(q4.vw.val) <- paste("port.val")
@@ -1940,6 +2231,7 @@ q4.vw.val[c(1:3,nrow(q4.vw.val)),]
 q4.vw.inv <- q4.vw.val[nrow(q4.vw.val),1]
 q4.vw.inv
 ```
+
 
 Combining: 
 
@@ -1965,10 +2257,10 @@ plot(port.val$EW.cum,
      ylab="Value of Investment",
      ylim=y.range,
      lty=1,
-     main="Value of $1 Investment in Equal-Weighted and Value-Weighted Portfolios of \n NVDA,MSFT,BRK_B and JPM \n December 301, 2011 - December 31, 2012")
+     main="Value of $1 Investment in Equal-Weighted and Value-Weighted Portfolios \n of 12 stocks \n December 31, 2021 - December 31, 2022")
 lines(port.val$VW.cum,lty=2)
 abline(h=1,lty=1)
-legend("topright",
+legend("topleft",
        c("Equal-Weighted Portfolio","Value-Weighted Portfolio"),
        lty=c(1,2))
 

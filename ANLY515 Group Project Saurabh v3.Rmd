@@ -1,0 +1,776 @@
+---
+title: "ANLY515 Group Project Saurabh v3"
+author: "Saurabh Shirish Prabhu"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+
+```{r setup, include=FALSE}
+rm(list=ls()) 
+knitr::opts_chunk$set(echo = TRUE)
+dir.create(tempdir())
+```
+
+Importing data from Yahoo finance:
+
+```{r}
+getwd()
+setwd('F:/a_Harrisburg_University_Academics/ANLY 515-51- A-2024Spring - Risk Modeling and Assessment/Final Project/Code')
+getwd()
+```
+This section contains
+Part A – Markowitz Mean-Variance Optimization
+Part B – Suitable distributions for returns
+
+Select two market sectors from the 11 sectors identified on this
+reference o <https://www.bloomberg.com/markets/sectors>
+
+Answer:
+
+[1]Information Technology<br>
+
+1.1 Semiconductors & Semiconductor Equipment: NVIDIA Corporation (NVDA)<br>
+1.2 Software & Services: Microsoft Corporation (MSFT)<br>
+1.3 Software & Services: Apple Inc. (AAPL)<br>
+1.4 Software & Services: Netflix Inc. (NFLX)<br>
+
+
+[2]Financials<br>
+
+2.1 Insurance: Berkshire Hathaway Inc. (BRK.B)<br>
+2.2 Banks: JPMorgan Chase & Co. (JPM)<br>
+2.3 Banks: CitiGroup Inc. (C)<br>
+2.4 Insurance: BlackRock Inc. (BLK)<br>
+
+
+
+[3]Consumer Discretionary:<br>
+
+3.1 Retailing: McDonald's Corporation (MCD)<br>
+3.2 Consumer Durables & Apparel: Skechers U.S.A., Inc. (SKX)<br>
+3.3 Retailing: Starbucks Corp. (SBUX) <br>
+3.4 Consumer Durables & Apparel: Nike Inc. (NKE)
+
+
+
+[4]Industrials: <br>
+
+4.1 Capital Goods: Cummins Inc. (CMI)<br>
+4.2 Capital Goods:Deere & Company (DE)<br>
+
+
+References: <br>
+[1]<https://stockanalysis.com/stocks/industry/><br>
+[2]<https://medium.com/\@sil.soham/importing-and-visualising-stock-market-data-in-r-ac5a22e23cd><br>
+
+
+Import all necessary libraries
+
+```{r}
+library(quantmod)
+library(xts)
+library(dplyr)
+library(corrplot)
+```
+
+Load all stocks
+
+
+
+• Confirm that there is no missing data<br> 
+• Check the dimensions to
+verify that the data covers 5 years<br>
+```{r}
+
+start <- as.Date("2014-12-31",format="%Y-%m-%d")
+end <- as.Date("2023-12-31",format="%Y-%m-%d")
+
+# Use getSymbols to retrieve the data
+
+# [1]Information Technology
+data.NVDA <- getSymbols("NVDA", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.MSFT <- getSymbols("MSFT", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.AAPL <- getSymbols("AAPL", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NFLX <- getSymbols("NFLX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [2]Financials
+data.BRK_B <- getSymbols("BRK-B", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.JPM <- getSymbols("JPM", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.C <- getSymbols("C", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.BLK <- getSymbols("BLK", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [3]Consumer Discretionary:
+data.MCD <- getSymbols("MCD", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SKX <- getSymbols("SKX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SBUX <- getSymbols("SBUX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NKE <- getSymbols("NKE", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+# Assign the class "xts" and "zoo" explicitly
+# class(data.NVDA) <- c("xts", "zoo")
+# Print the class of the assigned variable
+class(data.NVDA)
+
+
+
+names(data.BRK_B)
+names(data.BRK_B) <- paste(c("BRK_B.Open","BRK_B.High","BRK_B.Low","BRK_B.Close","BRK_B.Volume","BRK_B.Adjusted"))
+names(data.BRK_B)
+
+```
+```{r}
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Adjusted.Prices <- data.NVDA$NVDA.Adjusted
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.MSFT$MSFT.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.AAPL$AAPL.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.NFLX$NFLX.Adjusted)
+# Infotech.Adjusted.Prices[c(1:3,nrow(Infotech.Adjusted.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Adjusted.Prices <- data.BRK_B$BRK_B.Adjusted
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.JPM$JPM.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.C$C.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.BLK$BLK.Adjusted)
+# Financials.Adjusted.Prices[c(1:3,nrow(Financials.Adjusted.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Adjusted.Prices <- data.MCD$MCD.Adjusted
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SKX$SKX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SBUX$SBUX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.NKE$NKE.Adjusted)
+# Consumer.Adjusted.Prices[c(1:3,nrow(Consumer.Adjusted.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.Adj.all <- cbind(Infotech.Adjusted.Prices,Financials.Adjusted.Prices,Consumer.Adjusted.Prices)
+Portfolio.Adj.all[c(1:3,nrow(Portfolio.Adj.all)),]
+
+str(Portfolio.Adj.all)
+summary(Portfolio.Adj.all)
+```
+Variance covariance matrix: 
+
+Part A – Risks
+
+```{r}
+
+multi <- Portfolio.Adj.all
+
+mat.price <- matrix(multi,nrow(multi))
+prc2ret <- function(x) Delt(x)
+
+
+mat.ret1 <- apply(mat.price,2,function(x) {prc2ret(c(x))})
+
+
+
+mat.ret <- mat.ret1[-1,]
+colnames(mat.ret1) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+# mat.ret[1:4,]
+
+
+mat.ret[c(1:2,nrow(mat.ret)),]
+
+# # Create a vector of weights AMZN: 25% IBM: 75%
+# 
+# WGT.12asset <- rep(1/12, 12)   ###EQUALLY WEIGHTED
+# WGT.12asset <- matrix(WGT.12asset,1)
+# # WGT.12asset
+# # Create a transposed vector of weights (command: t)
+# 
+# tWGT.12asset <- t(WGT.12asset)
+# tWGT.12asset
+
+
+## Calculate annualize and annualize variance-covariance matrix
+VCOV <- cov(mat.ret)
+VCOV.annual <- nrow(mat.ret)*VCOV   ## 252 is nrow of mat.ret 
+VCOV.annual
+
+# Check the range of values in the covariance matrix
+min_value <- min(VCOV.annual)
+max_value <- max(VCOV.annual)
+
+
+# Convert covariance matrix to correlation matrix
+COR.annual <- cov2cor(VCOV.annual)
+corrplot(COR.annual, method = "circle")
+```
+
+Import Returns Data and Convert it Into a Matrix
+
+Calculate return time series 
+
+```{r}
+port.df <- data.frame(date = index(Portfolio.Adj.all), coredata(Portfolio.Adj.all))
+port.df[c(1:3,nrow(port.df)),]
+
+
+Port.rets <-port.df
+date<-Port.rets$date
+# str(date)
+
+PortRet.price <- Port.rets[,-1]
+
+
+attr(PortRet.price, 'time')<-date   ##add time attribute to dataset
+# str(PortRet.price)
+
+prc2ret <- function(x) Delt(x)
+
+
+Port.rets.all <- apply(PortRet.price,2,function(x) {prc2ret(c(x))})
+
+
+
+colnames(Port.rets.all) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+
+## Add date column
+
+
+Port.rets.all = data.frame(Port.rets.all)
+Port.rets.all$date <- port.df$date
+
+# summary(PortRet_2013)
+# str(PortRet_2013)
+# head(PortRet_2013)
+attr(Port.rets.all, 'time')<-date
+# str(Port.rets.all)
+head(Port.rets.all)
+
+
+### reorder to get date in first column
+# Get the index of the 'date' column
+date_column_index <- which(names(Port.rets.all) == "date")
+
+# Move 'date' column to the first position
+new_order <- c(date_column_index, 1:(ncol(Port.rets.all)-1)[-date_column_index+1])
+
+# Rearrange the columns of the data frame
+Port.rets.df <- Port.rets.all[, new_order]
+head(Port.rets.df)
+
+
+```
+
+
+CORRECT CODE FOR MONTHLY RETURNS
+
+
+
+
+Monthly returns: 
+
+```{r}
+# date <- as.Date(data.NVDA$Date,format="%Y-%m-%d")
+# NVDA <- cbind(date,data.NVDA[,-1])
+# NVDA <- NVDA[order(NVDA$date),]
+# NVDA <- xts(NVDA[,2:7],order.by=NVDA[,1])
+# names(NVDA) <- paste(c("NVDA.Open","NVDA.High","NVDA.Low","NVDA.Close","NVDA.Volume","NVDA.Adjusted"))
+
+NVDA <- data.NVDA
+MSFT <- data.MSFT
+AAPL <- data.AAPL
+NFLX <- data.NFLX
+
+BRK_B <- data.BRK_B
+JPM   <- data.JPM
+C     <- data.C
+BLK   <- data.BLK
+
+MCD   <- data.MCD
+SKX   <- data.SKX
+SBUX  <- data.SBUX
+NKE   <- data.NKE
+
+
+NVDA.monthly <- to.monthly(NVDA)
+MSFT.monthly <- to.monthly(MSFT)
+AAPL.monthly <- to.monthly(AAPL)
+NFLX.monthly <- to.monthly(NFLX)
+
+BRK_B.monthly <- to.monthly(BRK_B)
+JPM.monthly  <- to.monthly(JPM)
+C.monthly     <- to.monthly(C)
+BLK.monthly   <- to.monthly(BLK)
+
+MCD.monthly   <- to.monthly(MCD)
+SKX.monthly   <- to.monthly(SKX)
+SBUX.monthly  <- to.monthly(SBUX)
+NKE.monthly   <- to.monthly(NKE)
+
+NVDA.ret <- Delt(NVDA.monthly$NVDA.Adjusted)
+MSFT.ret <- Delt(MSFT.monthly$MSFT.Adjusted)
+AAPL.ret <- Delt(AAPL.monthly$AAPL.Adjusted)
+NFLX.ret <- Delt(NFLX.monthly$NFLX.Adjusted)
+
+names(NVDA.ret) <- paste("NVDA.Ret")
+names(MSFT.ret) <- paste("MSFT.Ret")
+names(AAPL.ret) <- paste("AAPL.Ret")
+names(NFLX.ret) <- paste("NFLX.Ret")
+
+BRK_B.ret <- Delt(BRK_B.monthly$BRK_B.Adjusted)
+JPM.ret   <- Delt(JPM.monthly$JPM.Adjusted)
+C.ret     <- Delt(C.monthly$C.Adjusted)
+BLK.ret   <- Delt(BLK.monthly$BLK.Adjusted)
+
+names(BRK_B.ret) <- paste("BRK_B.Ret")
+names(JPM.ret)   <- paste("JPM.Ret")
+names(C.ret)     <- paste("C.Ret")
+names(BLK.ret)  <- paste("BLK.Ret")
+
+MCD.ret <- Delt(MCD.monthly$MCD.Adjusted)
+SKX.ret <- Delt(SKX.monthly$SKX.Adjusted)
+SBUX.ret<- Delt(SBUX.monthly$SBUX.Adjusted)
+NKE.ret <- Delt(NKE.monthly$NKE.Adjusted)
+
+names(MCD.ret)  <- paste("MCD.Ret")
+names(SKX.ret)  <- paste("SKX.Ret")
+names(SBUX.ret) <- paste("SBUX.Ret")
+names(NKE.ret)  <- paste("NKE.Ret")
+
+Ret.monthly <- cbind(NVDA.ret[-1,],MSFT.ret[-1,],AAPL.ret[-1,],NFLX.ret[-1,],
+                     BRK_B.ret[-1,],JPM.ret[-1,],C.ret[-1,],BLK.ret[-1,],
+                     MCD.ret[-1,],SKX.ret[-1,],SBUX.ret[-1,],NKE.ret[-1,])
+Ret.monthly[c(1:3,nrow(Ret.monthly)),]
+
+
+
+# NVDA.ret[c(1:3,nrow(NVDA.ret)),]
+
+
+```
+```{r}
+str(Ret.monthly)
+summary(Ret.monthly)
+
+# Row names for stocks
+stock_names <- c(
+  "NVDA", "MSFT", "AAPL", "NFLX",
+  "BRK_B", "JPM", "C", "BLK",
+  "MCD", "SKX", "SBUX", "NKE"
+)
+
+# Plot boxplot with customized axis labels
+boxplot(Ret.monthly*100,
+        main = "Average Monthly Returns",
+        ylab = "Percentage",
+        xlab = "Stocks",
+        names = stock_names,
+        las = 2,
+        ylim = c(-50, 50),# Assuming your returns range from -50% to 50%
+        yaxt = "n")  # Suppress y-axis ticks)  
+# Customize y-axis ticks with "%" symbol
+axis(side = 2, at = seq(-50, 50, by = 5), labels = paste0(seq(-50, 50, by = 5), "%"))
+# Add horizontal dashed line at 0%
+abline(h = 0, lty = 2)
+```
+
+Matrix command to convert the combined data into a matrix. We rename the column headers using the colnames command with the relevant ticker to better identify the return series.
+
+```{r}
+mat.ret <- matrix(Ret.monthly,nrow(Ret.monthly))
+# mat.ret[1:3,]
+colnames(mat.ret) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+head(mat.ret,2)
+tail(mat.ret,2)
+
+
+## covariance matrix
+
+VCOV <- cov(mat.ret)
+# VCOV
+
+VCOV_rounded <- round(VCOV, digits = 4)
+
+# Display the rounded covariance matrix
+VCOV_rounded
+
+
+
+
+
+## Average erturns
+avg.ret <- matrix(apply(mat.ret,2,mean))
+rownames(avg.ret) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+colnames(avg.ret) <- c("Avg.Ret")
+avg.ret
+
+
+min.ret <- min(avg.ret)
+min.ret
+max.ret <- max(avg.ret)
+max.ret
+```
+```{r}
+VCOV.annual <- nrow(mat.ret)*VCOV   ## 252 is nrow of mat.ret 
+VCOV.annual
+
+# Check the range of values in the covariance matrix
+min_value <- min(VCOV.annual)
+max_value <- max(VCOV.annual)
+
+
+# Convert covariance matrix to correlation matrix
+COR.annual <- cov2cor(VCOV.annual)
+corrplot(COR.annual, method = "circle")
+
+
+
+
+```
+Target Portfolio Returns Vector
+
+```{r}
+increments=100
+tgt.ret <- seq(min.ret,max.ret,length=increments)
+head(tgt.ret)
+
+
+tgt.sd <- rep(0,length=increments)
+tgt.sd
+
+
+wgt <- matrix(0,nrow=increments,ncol=length(avg.ret))
+# head(wgt)
+
+# Dmat_cov = round(VCOV*2,5)
+# Run the quadrpog Optimizer
+library(quadprog)
+for (i in 1:increments){
+  Dmat <- 2*VCOV  ## 2*VCOV
+  dvec <- c(rep(0,length(avg.ret)))
+  Amat <- cbind(rep(1,length(avg.ret)),avg.ret,
+                diag(1,nrow=ncol(Ret.monthly)))
+  bvec <- c(1,tgt.ret[i],rep(0,ncol(Ret.monthly)))
+  
+  soln <- solve.QP(Dmat,dvec,Amat,bvec=bvec,meq=2)
+  
+  tgt.sd[i] <- sqrt(soln$value)
+  wgt[i,] <- soln$solution
+}
+
+
+head(tgt.sd)
+head(wgt)
+```
+
+
+
+
+```{r}
+
+
+colnames(wgt) <- paste(c("wgt.NVDA", "wgt.MSFT", "wgt.AAPL", "wgt.NFLX",
+                         "wgt.BRK_B",  "wgt.JPM", "wgt.C",  "wgt.BLK",
+                         "wgt.MCD",  "wgt.SKX", "wgt.SBUX",  "wgt.NKE"))
+head(wgt)
+CHECK <- rowSums(wgt)
+CHECK
+
+
+tgt.port <- data.frame(cbind(tgt.ret,tgt.sd,wgt))
+head(tgt.port)
+
+```
+## Minimum Variance Portfolio
+
+```{r min variance portfolio}
+
+minvar.port <- subset(tgt.port,tgt.port$tgt.sd==min(tgt.port$tgt.sd))
+minvar.port
+
+
+# The Sharpe Ratio requires a risk-free rate and we use the 3-Month Constant Maturity Treasury as a proxy for that rate. Since the yield as of December 31, 2013 of 0.07% is an annual yield, we convert this to a monthly yield by dividing the rate by 12.
+# 
+# December 31, 2023 of 5.4%   - reference: https://fred.stlouisfed.org/series/DGS3MO
+
+riskfree = .054/12
+riskfree
+
+tgt.port$Sharpe <- (tgt.port$tgt.ret-riskfree)/tgt.port$tgt.sd
+head(tgt.port)
+```
+Identify the portfolio with the highest Sharpe Ratio and that is the tangency portfolio
+```{r tangency portfolio}
+
+
+tangency.port <- subset(tgt.port,tgt.port$Sharpe==max(tgt.port$Sharpe))
+print(tangency.port)
+
+
+```
+Identify Efficient Portfolios
+Portfolios that have returns higher than the return of the minimum variance portfolio.
+```{r efficient frontiers}
+eff.frontier <- subset(tgt.port,tgt.port$tgt.ret>=minvar.port$tgt.ret)
+eff.frontier[c(1:3,nrow(eff.frontier)),]
+```
+
+Plot the MV Efficient Frontier
+
+```{r}
+plot(x=tgt.sd,
+     y=tgt.ret,
+     col="gray40",
+     xlab="Portfolio Risk",
+     ylab="Portfolio Return",
+     main="Mean-Variance Efficient Frontier of 12 Assets \n Based on the Quadratic Programming Approach")
+abline(h=0,lty=1)
+points(x=minvar.port$tgt.sd,y=minvar.port$tgt.ret,pch=17,cex=3,col="red")
+points(x=tangency.port$tgt.sd,y=tangency.port$tgt.ret,pch=19,cex=3,col="blue")
+points(x=eff.frontier$tgt.sd,y=eff.frontier$tgt.ret,pch=20,cex=1,col="darkgreen")
+
+
+# Create legend
+legend("bottomright", legend = c("Min Variance Portfolio", "Tangency Portfolio", "Efficient Frontier"),
+       col = c("red", "blue", "darkgreen"), pch = c(17, 19, 20), cex = 1, bty = "n")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FOR DAILY RETRUNS
+
+
+convert to xts
+a) Calculate Variance-Covariance (VCOV) Matrix of Returns
+
+```{r}
+
+Port.rets.xts = Port.rets.df 
+date <-as.Date(Port.rets.all$date,format="%Y-%m-%d")
+Port.rets.xts <- cbind(date, Port.rets.xts[,-1])
+Port.rets.xts <- Port.rets.xts[order(Port.rets.xts$date),]
+Port.rets.xts <- xts(Port.rets.xts[,2:ncol(Port.rets.xts)],order.by=Port.rets.xts[,1])
+
+
+# # SPY.ret <- Delt(Port.monthly$data.SPY.Adjusted)
+# 
+# names(Port.monthly) <- paste(c(
+#                       "NVDA", "MSFT", "AAPL", "NFLX",
+#                       "BRK_B",  "JPM", "C",  "BLK",
+#                       "MCD",  "SKX", "SBUX",  "NKE"
+#                       ))
+# Port.monthly[c(1:3,nrow(Port.monthly)),]
+
+Port.rets.xts <- Port.rets.xts[-1,]
+Port.rets.xts[c(1:3,nrow(Port.rets.xts)),]
+
+VCOV.xts <- cov(Port.rets.xts)
+VCOV.annual.xts <- nrow(Port.rets.xts)*VCOV.xts   ## s nrow of Port.rets.xts 
+VCOV.annual.xts
+
+```
+
+```{r}
+# # Convert xts object to zoo object
+# Port.rets.zoo <- as.zoo(Port.rets.xts)
+# # Convert daily returns to monthly returns
+# Port.monthly <- to.period(Port.rets.zoo, period = "months", OHLC = FALSE)
+# 
+# # Convert zoo object back to xts object
+# Port.monthly.xts <- as.xts(Port.monthly)
+# Port.monthly.xts[c(1:3,nrow(Port.monthly.xts)),]
+# 
+# 
+# 
+# 
+# VCOV.monthly.xts <- cov(Port.monthly.xts)
+# VCOV.annual.xts1 <- nrow(Port.monthly.xts)*VCOV.monthly.xts   ## s nrow of Port.rets.xts 
+# VCOV.annual.xts1
+
+```
+COnsrtuct target portfolio return vector
+
+```{r}
+mat.ret <- matrix(Port.rets.xts,nrow(Port.rets.xts))
+# mat.ret[1:3,]
+colnames(mat.ret) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+head(mat.ret)
+
+avg.ret <- matrix(apply(mat.ret,2,mean))
+rownames(avg.ret) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+colnames(avg.ret) <- c("Avg.Ret")
+avg.ret
+
+
+min.ret <- min(avg.ret)
+min.ret
+max.ret <- max(avg.ret)
+max.ret
+```
+Use 100 increments between the minimum and maximum returns to generate the target returns. For each run of the optimizer, the optimizer finds the combination of weights of the four securities that generates the target return with the lowest risk.
+```{r}
+increments=50
+tgt.ret <- seq(min.ret,max.ret,length=increments)
+head(tgt.ret,3)
+
+tgt.sd <- rep(0,length=increments)
+tgt.sd
+
+wgt <- matrix(0,nrow=increments,ncol=length(avg.ret))
+head(wgt,3)
+
+
+
+library(quadprog)
+
+for (i in 1:increments){
+  Dmat <- VCOV.xts*20
+  dvec <- c(rep(0,length(avg.ret)))
+  Amat <- cbind(rep(1,length(avg.ret)),avg.ret,
+                diag(1,nrow=ncol(Port.rets.xts)))
+  bvec <- c(1,tgt.ret[i],rep(0,ncol(Port.rets.xts)))
+  soln <- solve.QP(Dmat,dvec,Amat,bvec=bvec,meq=2)
+  tgt.sd[i] <- sqrt(soln$value)
+  wgt[i,] <- soln$solution
+}
+head(tgt.sd)
+tail(tgt.sd)
+```
+```{r}
+options(scipen=100)
+head(wgt)
+```
+```{r}
+colnames(wgt) <- paste(c("wgt.NVDA", "wgt.MSFT", "wgt.AAPL", "wgt.NFLX",
+                         "wgt.BRK_B",  "wgt.JPM", "wgt.C",  "wgt.BLK",
+                         "wgt.MCD",  "wgt.SKX", "wgt.SBUX",  "wgt.NKE"))
+# wgt[1,1] <- 0 
+# wgt[nrow(wgt),2] <- 0 
+head(wgt)
+
+
+tgt.port <- data.frame(cbind(tgt.ret,tgt.sd,wgt))
+head(tgt.port)
+```
+Minimum Variance Portfolio 
+
+```{r}
+
+minvar.port <- subset(tgt.port,tgt.port$tgt.sd==min(tgt.port$tgt.sd))
+minvar.port
+
+```
+The Sharpe Ratio requires a risk-free rate and we use the 3-Month Constant Maturity Treasury as a proxy for that rate. Since the yield as of December 31, 2013 of 0.07% is an annual yield, we convert this to a monthly yield by dividing the rate by 12.
+
+December 31, 2023 of 5.4%   - reference: https://fred.stlouisfed.org/series/DGS3MO
+```{r}
+riskfree = .054/12
+
+tgt.port$Sharpe <- (tgt.port$tgt.ret-riskfree)/tgt.port$tgt.sd
+head(tgt.port)
+
+
+
+# Indentify the portfolio with the highest Sharpe Ratio using a combination of subset and max commands.
+
+tangency.port <- subset(tgt.port,tgt.port$Sharpe==max(tgt.port$Sharpe))
+tangency.port
+
+
+# Identify Efficient Portfolios
+
+eff.frontier <- subset(tgt.port,tgt.port$tgt.ret>=minvar.port$tgt.ret)
+eff.frontier[c(1:3,nrow(eff.frontier)),]
+```
+
+Plot the Efficient Frontier
+```{r}
+CHECK <- rowSums(wgt)
+CHECK
+
+```
+
+
+```{r}
+plot(x=tgt.sd,
+     y=tgt.ret,
+     col="gray40",
+     xlab="Portfolio Risk",
+     ylab="Portfolio Return",
+     main="Mean-Variance Efficient Frontier of 12 Assets \n Based on the Quadratic Programming Approach")
+abline(h=0,lty=1)
+points(x=minvar.port$tgt.sd,y=minvar.port$tgt.ret,pch=17,cex=3,col="red")
+points(x=tangency.port$tgt.sd,y=tangency.port$tgt.ret,pch=19,cex=3,col="blue")
+points(x=eff.frontier$tgt.sd,y=eff.frontier$tgt.ret,pch=20,cex=1,col="darkgreen")
+
+
+# Create legend
+legend("bottomright", legend = c("Min Variance Portfolio", "Tangency Portfolio", "Efficient Frontier"),
+       col = c("red", "blue", "darkgreen"), pch = c(17, 19, 20), cex = 1, bty = "n")
+```
+
+

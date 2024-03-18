@@ -1,0 +1,588 @@
+---
+title: "ANLY515_GroupProject_Saurabh v5 Historical Risks"
+author: "Saurabh Shirish Prabhu"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls()) 
+knitr::opts_chunk$set(echo = TRUE)
+dir.create(tempdir())
+```
+
+Importing data from Yahoo finance:
+
+```{r}
+getwd()
+setwd('F:/a_Harrisburg_University_Academics/ANLY 515-51- A-2024Spring - Risk Modeling and Assessment/Final Project/Code')
+getwd()
+```
+This section contains
+Part A – Markowitz Mean-Variance Optimization
+Part B – Suitable distributions for returns
+
+Select two market sectors from the 11 sectors identified on this
+reference o <https://www.bloomberg.com/markets/sectors>
+
+Answer:
+
+[1]Information Technology<br>
+
+1.1 Semiconductors & Semiconductor Equipment: NVIDIA Corporation (NVDA)<br>
+1.2 Software & Services: Microsoft Corporation (MSFT)<br>
+1.3 Software & Services: Apple Inc. (AAPL)<br>
+1.4 Software & Services: Netflix Inc. (NFLX)<br>
+
+
+[2]Financials<br>
+
+2.1 Insurance: Berkshire Hathaway Inc. (BRK.B)<br>
+2.2 Banks: JPMorgan Chase & Co. (JPM)<br>
+2.3 Banks: CitiGroup Inc. (C)<br>
+2.4 Insurance: BlackRock Inc. (BLK)<br>
+
+
+
+[3]Consumer Discretionary:<br>
+
+3.1 Retailing: McDonald's Corporation (MCD)<br>
+3.2 Consumer Durables & Apparel: Skechers U.S.A., Inc. (SKX)<br>
+3.3 Retailing: Starbucks Corp. (SBUX) <br>
+3.4 Consumer Durables & Apparel: Nike Inc. (NKE)
+
+
+
+[4]Industrials: <br>
+
+4.1 Capital Goods: Cummins Inc. (CMI)<br>
+4.2 Capital Goods:Deere & Company (DE)<br>
+
+
+References: <br>
+[1]<https://stockanalysis.com/stocks/industry/><br>
+[2]<https://medium.com/\@sil.soham/importing-and-visualising-stock-market-data-in-r-ac5a22e23cd><br>
+
+
+Import all necessary libraries
+
+```{r}
+library(quantmod)
+library(xts)
+library(dplyr)
+library(corrplot)
+```
+
+Load all stocks
+
+
+
+• Confirm that there is no missing data<br> 
+• Check the dimensions to
+verify that the data covers 5 years<br>
+```{r}
+
+start <- as.Date("2014-12-31",format="%Y-%m-%d")
+end <- as.Date("2023-12-31",format="%Y-%m-%d")
+
+# Use getSymbols to retrieve the data
+
+# [1]Information Technology
+data.NVDA <- getSymbols("NVDA", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.MSFT <- getSymbols("MSFT", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.AAPL <- getSymbols("AAPL", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NFLX <- getSymbols("NFLX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [2]Financials
+data.BRK_B <- getSymbols("BRK-B", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.JPM <- getSymbols("JPM", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.C <- getSymbols("C", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.BLK <- getSymbols("BLK", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [3]Consumer Discretionary:
+data.MCD <- getSymbols("MCD", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SKX <- getSymbols("SKX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SBUX <- getSymbols("SBUX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NKE <- getSymbols("NKE", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+# Assign the class "xts" and "zoo" explicitly
+# class(data.NVDA) <- c("xts", "zoo")
+# Print the class of the assigned variable
+class(data.NVDA)
+
+
+
+names(data.BRK_B)
+names(data.BRK_B) <- paste(c("BRK_B.Open","BRK_B.High","BRK_B.Low","BRK_B.Close","BRK_B.Volume","BRK_B.Adjusted"))
+names(data.BRK_B)
+
+```
+```{r}
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Adjusted.Prices <- data.NVDA$NVDA.Adjusted
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.MSFT$MSFT.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.AAPL$AAPL.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.NFLX$NFLX.Adjusted)
+# Infotech.Adjusted.Prices[c(1:3,nrow(Infotech.Adjusted.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Adjusted.Prices <- data.BRK_B$BRK_B.Adjusted
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.JPM$JPM.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.C$C.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.BLK$BLK.Adjusted)
+# Financials.Adjusted.Prices[c(1:3,nrow(Financials.Adjusted.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Adjusted.Prices <- data.MCD$MCD.Adjusted
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SKX$SKX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SBUX$SBUX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.NKE$NKE.Adjusted)
+# Consumer.Adjusted.Prices[c(1:3,nrow(Consumer.Adjusted.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.Adj.all <- cbind(Infotech.Adjusted.Prices,Financials.Adjusted.Prices,Consumer.Adjusted.Prices)
+Portfolio.Adj.all[c(1:3,nrow(Portfolio.Adj.all)),]
+
+str(Portfolio.Adj.all)
+summary(Portfolio.Adj.all)
+```
+Variance covariance matrix: 
+
+Part A – Risks
+
+```{r}
+
+multi <- Portfolio.Adj.all
+
+mat.price <- matrix(multi,nrow(multi))
+prc2ret <- function(x) Delt(x)
+
+
+mat.ret1 <- apply(mat.price,2,function(x) {prc2ret(c(x))})
+
+
+
+mat.ret <- mat.ret1[-1,]
+colnames(mat.ret1) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+# mat.ret[1:4,]
+
+
+mat.ret[c(1:2,nrow(mat.ret)),]
+
+# # Create a vector of weights AMZN: 25% IBM: 75%
+# 
+# WGT.12asset <- rep(1/12, 12)   ###EQUALLY WEIGHTED
+# WGT.12asset <- matrix(WGT.12asset,1)
+# # WGT.12asset
+# # Create a transposed vector of weights (command: t)
+# 
+# tWGT.12asset <- t(WGT.12asset)
+# tWGT.12asset
+
+
+## Calculate annualize and annualize variance-covariance matrix
+VCOV <- cov(mat.ret)
+VCOV.annual <- nrow(mat.ret)*VCOV   ## 252 is nrow of mat.ret 
+VCOV.annual
+
+# Check the range of values in the covariance matrix
+min_value <- min(VCOV.annual)
+max_value <- max(VCOV.annual)
+
+
+# Convert covariance matrix to correlation matrix
+COR.annual <- cov2cor(VCOV.annual)
+corrplot(COR.annual, method = "circle")
+```
+```{r}
+port.df <- data.frame(date = index(Portfolio.Adj.all), coredata(Portfolio.Adj.all))
+port.df[c(1:3,nrow(port.df)),]
+
+
+Port.rets <-port.df
+date<-Port.rets$date
+# str(date)
+
+PortRet.price <- Port.rets[,-1]
+
+
+attr(PortRet.price, 'time')<-date   ##add time attribute to dataset
+# str(PortRet.price)
+
+prc2ret <- function(x) Delt(x)
+
+
+Port.rets.all <- apply(PortRet.price,2,function(x) {prc2ret(c(x))})
+
+
+
+colnames(Port.rets.all) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+
+## Add date column
+Port.rets.all = data.frame(Port.rets.all)
+Port.rets.all$date <- port.df$date
+
+attr(Port.rets.all, 'time')<-date
+head(Port.rets.all)
+
+
+### reorder to get date in first column
+# Get the index of the 'date' column
+date_column_index <- which(names(Port.rets.all) == "date")
+
+# Move 'date' column to the first position
+new_order <- c(date_column_index, 1:(ncol(Port.rets.all)-1)[-date_column_index+1])
+
+# Rearrange the columns of the data frame
+Port.rets.df <- Port.rets.all[, new_order]
+Port.rets.df <- Port.rets.df[-1,]
+head(Port.rets.df)
+```
+
+
+Create a vector of weights min variance portfolio
+
+
+
+```{r}
+
+# Create a vector of weights min variance portfolio
+
+WGT.12asset <- c(0,0.116,5.95e-19,0.0351,0.363,0,3.8e-17,0,0.425,0.00862,0.0261,0.0263)
+WGT.12asset <- matrix(WGT.12asset,1)
+WGT.12asset
+
+
+
+# Create a transposed vector of weights (command: t)
+
+tWGT.12asset <- t(WGT.12asset)
+tWGT.12asset
+```
+MATRIX METHOD:
+Calculate the portfolio risk (remmeber %*% is used to multiply a matrix)
+```{r}
+# Create a vector of weights min variance portfolio
+
+WGT.12asset.mat <- c(0,0.116,5.95e-19,0.0351,0.363,0,3.8e-17,0,0.425,0.00862,0.0261,0.02627)
+WGT.12asset.mat <- matrix(WGT.12asset.mat,1)
+WGT.12asset.mat
+
+
+
+# Create a transposed vector of weights (command: t)
+
+tWGT.12asset.mat <- t(WGT.12asset)
+tWGT.12asset.mat
+
+# Calculate the portfolio risk (remmeber %*% is used to multiply a matrix)
+mat.var2asset.mat <- WGT.12asset.mat %*% VCOV.annual %*% tWGT.12asset.mat
+mat.var2asset.mat
+
+# To calculate the portfolio stndard deviation, use the sqrt command.
+
+mat.sd2asset.mat <- sqrt(mat.var2asset.mat)
+mat.sd2asset.mat
+
+```
+Value-at-risk
+
+```{r}
+port.ret <- read.csv("Hypothetical Portfolio (Daily).csv")
+port.ret[c(1:3,nrow(port.ret)),]
+
+port.ret <- port.ret$VW.ret[-1]
+port.ret[1:5]
+```
+Calculate the mean and standard deviation
+```{r}
+port.mean <- mean(port.ret)
+port.mean
+
+port.risk <- sd(port.ret)
+port.risk
+```
+Calculate 1 and 5% VaR
+```{r}
+VaR01.Gaussian <- -(port.mean+port.risk*qnorm(0.01))*1050746	
+VaR01.Gaussian <- format(VaR01.Gaussian,big.mark=',') #to include a comma
+VaR01.Gaussian
+# This means that there is a %1 chance that the portfolio loses more than $68,326.39
+
+VaR05.Gaussian <- -(port.mean+port.risk*qnorm(0.05))*1050746	
+VaR05.Gaussian <- format(VaR05.Gaussian,big.mark=',') #to include a comma
+VaR05.Gaussian
+
+# This means that there is a %5 chance that the portfolio loses more than $48,136.66
+```
+Historical Value-at-risk
+
+
+```{r}
+ret.data <- Port.rets.df
+ret.data[c(1:3,nrow(ret.data)),]
+
+last.idx <- c(0.06502349,	0.3241750, 0.3743718,	0.02372905,	0.07272399,	0.07176202,	0.01602416,	0.01937829,	0.03509835,	0.0010180735,	0.02070722, 0.02673449)*1000000
+
+last.idx
+
+port.val <- sum(last.idx)
+port.val
+```
+Calculate simulated portfolio returns applying current portfolio weights to historical security returns
+# ```{r}
+# sim.portPnL <- last.idx[1]%*%ret.data$NVDA+
+#                last.idx[2]%*%ret.data$MSFT+
+#                last.idx[3]%*%ret.data$AAPL+
+#                last.idx[4]%*%ret.data$NFLX+
+#                last.idx[5]%*%ret.data$BRK_B+
+#                last.idx[6]%*%ret.data$JPM+
+#                last.idx[7]%*%ret.data$C+
+#                last.idx[8]%*%ret.data$BLK+
+#                last.idx[9]%*%ret.data$MCD+
+#                last.idx[10]%*%ret.data$SKX+
+#                last.idx[11]%*%ret.data$SBUX+
+#                last.idx[12]%*%ret.data$NKE
+# 
+# 
+# 
+# 
+# names(sim.portPnL) <- paste("Port.Pnl")
+# sim.portPnL[c(1:3,nrow(sim.portPnL)),]
+# 
+# ```
+
+
+```{r}
+# Convert ret.data[, -1] to numeric matrix
+ret_data_numeric <- as.matrix(as.data.frame(ret.data[, -1]))
+
+# Convert last.idx to a numeric vector
+last_idx_numeric <- as.numeric(last.idx)
+
+# Convert last.idx to a column matrix
+last_idx_mat <- matrix(last_idx_numeric, ncol = 1)
+
+# Compute the portfolio PnL for each date
+sim.portPnL <- ret_data_numeric %*% last_idx_mat
+
+# Add column names
+colnames(sim.portPnL) <- "Port.Pnl"
+
+# Print the first few rows
+sim.portPnL[c(1:3,nrow(sim.portPnL)),]
+
+```
+
+```{r}
+
+VaR01.Historical = quantile(-sim.portPnL,0.99)
+VaR01.Historical <- format(VaR01.Historical,big.mark = ",")
+VaR01.Historical
+
+```
+```{r}
+
+VaR05.Historical = quantile(-sim.portPnL,0.95)
+VaR05.Historical <- format(VaR05.Historical,big.mark = ",")
+VaR05.Historical
+
+```
+lot the VaR in relation to the P&L density
+
+i - density of the simulated portfolio P&L ii - normal distribution of P&L’s based on the mean and sd of the simulated portfolio P&L iii - calculated estimates of the 1 and 5% 1-Day Historical Var
+
+To obtain the density of the simulated portfolio P&L, use the density command Typing in ret.d generates the output shown below
+```{r}
+ret.d=density(sim.portPnL)
+ret.d
+
+```
+```{r}
+plot(ret.d,
+     xlab = "Profit & Loss",
+     ylab = "",
+     yaxt="n",
+     main = "Density of Simulated Portfolio P&L Over 8 years
+     1% and 5% 1-Day Historical Value-at-Risk (VaR)")
+abline(v=-quantile(-sim.portPnL,0.99),col="gray",lty=1)
+abline(v=-quantile(-sim.portPnL,0.95),col="black",lty=2)
+
+```
+
+Add ii. Create a sequence of 1000 numbers between the smallest and the largest simulated P&L. This creates bounds for the normal density plot.
+```{r}
+x <- seq(min(sim.portPnL),max(sim.portPnL),length=1000)
+head(x)
+tail(x)
+
+# Use the dnorm command to provide the values of the probability density function for the normal distribution. (dnorm: x vector created above, mean of the simulated portfolio P&L, sd of the simulated portfolio P&L)
+
+y <- dnorm(x,mean=mean(sim.portPnL),sd=sd(sim.portPnL))
+head(y)
+tail(y)
+```
+Use the lines command to add the normal density plot as a dashed bell curve onto the plot.
+```{r}
+plot(ret.d,
+     xlab = "Profit & Loss",
+     ylab = "",
+     yaxt="n",
+     main = "Density of Simulated Portfolio P&L Over Three Years
+     1% and 5% 1-Day Historical Value-at-Risk (VaR)")
+abline(v=-quantile(-sim.portPnL,0.99),col="gray",lty=1)
+abline(v=-quantile(-sim.portPnL,0.95),col="black",lty=2)
+
+lines(x,y,type = "l",col="black",lwd=1,lty=3)
+
+legend("topright",
+       c("Simulated P&L Distribution",
+       "Normal Distribution",
+       "1% 1-Day VaR","5% 1-Day VaR"),
+       col=c("black","black","gray","black"),
+       lty=c(1,3,1,2))
+
+```
+Expected Shortfall
+VaR is limited since it fails to answer the question “If losses exceed VaR, how bad are the losses expected to be?”
+
+The Expected Shortfall (ES) answers this question
+
+ES is also known as tail VaR and tail loss
+
+As with VaR, this section will cover Gaussian ES and Historical ES
+
+Gaussian ES
+
+
+dnorm function will determine the height of the normal probability density function
+qnorm is the inverse normal cumulative density function
+mu is the portfolio return
+sigma is the sd of the portfolio returns
+alpha is the significance level
+```{r}
+ES01.Gaussian <- 1050746*(port.mean+port.risk*(dnorm(qnorm(.01))/.01))
+ES01.Gaussian <- format(ES01.Gaussian,big.mark = ',')
+ES01.Gaussian
+
+ES05.Gaussian <- 1050746*(port.mean+port.risk*(dnorm(qnorm(.05))/.05))
+ES05.Gaussian <- format(ES05.Gaussian,big.mark = ',')
+ES05.Gaussian
+
+# Historical ES
+# 
+# Historical ES is calculated by taking the average portfolio loss tht fails short of the Historical VaR estimate
+# 
+# Identify the Historical VaR limit for portfolio
+
+VaR01.hist= -quantile(-sim.portPnL,0.99)
+VaR01.hist
+
+VaR05.hist= -quantile(-sim.portPnL,0.95)
+VaR05.hist
+```
+
+```{r}
+ES.PnL <- data.frame(sim.portPnL)
+
+ES.PnL$VaR01.hist <- VaR01.hist
+ES.PnL$dummy01 <- ifelse(ES.PnL$Port.Pnl<ES.PnL$VaR01.hist,1,0)
+
+ES.PnL$VaR05.hist <- VaR05.hist
+ES.PnL$dummy05 <- ifelse(ES.PnL$Port.Pnl<ES.PnL$VaR05.hist,1,0)
+ES.PnL[c(1:3,nrow(ES.PnL)),]
+
+```
+Historical ES
+
+Extract portfolio losses in excess of VaR
+```{r}
+ES.PnL <- data.frame(sim.portPnL)
+
+ES.PnL$VaR01.hist <- VaR01.hist
+ES.PnL$dummy01 <- ifelse(ES.PnL$Port.Pnl<ES.PnL$VaR01.hist,1,0)
+
+ES.PnL$VaR05.hist <- VaR05.hist
+ES.PnL$dummy05 <- ifelse(ES.PnL$Port.Pnl<ES.PnL$VaR05.hist,1,0)
+
+shortfall01 <- subset(ES.PnL,ES.PnL$dummy01==1)
+shortfall05 <- subset(ES.PnL,ES.PnL$dummy05==1)
+head(shortfall01)
+
+head(shortfall05)
+
+
+```
+
+Historical ES
+
+Compute average losses in excess of VaR
+
+Take the average of the returns in each the these data objects.
+```{r}
+avg.ES01 <- -mean(shortfall01$Port.Pnl)
+ES01.Historical <- format(avg.ES01,big.mark = ',')
+ES01.Historical
+
+avg.ES05 <- -mean(shortfall05$Port.Pnl)
+ES05.Historical <- format(avg.ES05,big.mark = ',')
+ES05.Historical
+
+```
+Comparing VaR and ES
+ES is expected to be larger than VaR
+
+Using a combination of rbind and cbind to bring together all the resulting calculations of Historical and Gaussian VaR and ES.
+```{r}
+VaR.ES.Combined <- data.frame(rbind(
+  cbind(VaR01.Historical,ES01.Historical[1], 
+        VaR01.Gaussian,ES01.Gaussian[1]),
+  cbind(VaR05.Historical,ES05.Historical[1],
+        VaR05.Gaussian,ES05.Gaussian[1])))
+names(VaR.ES.Combined) <- paste(
+  c("VaR Historical","ES Historical","VaR Gaussian","ES Gaussian"))
+rownames(VaR.ES.Combined) <- paste(c("1% 1-Day","5% 1-Day"))
+VaR.ES.Combined
+```
+
+
+```{r}
+plot(ret.d,
+     xlab = "Profit & Loss",
+     ylab = "",
+     yaxt="n",
+     main = "Density of Simulated Portfolio P&L Over 8 Years
+     1% and 5% 1-Day Historical Expected Shortfall (ES) 
+     1% and 5% 1-Day Historical Value-at-Risk (VaR)")
+abline(v=-avg.ES01,col="maroon",lty=1)
+abline(v=-avg.ES05,col="red",lty=2)
+abline(v=-quantile(-sim.portPnL,0.99),col="darkgray",lty=3)
+abline(v=-quantile(-sim.portPnL,0.95),col="black",lty=4)
+
+lines(x,y,type = "l",col="black",lwd=1,lty=3)
+
+legend("topright",
+       c("Sim P&L Distribution",
+       "Normal Distribution",
+       "1% 1-Day ES","5% 1-Day ES",
+       "1% 1-Day VaR","5% 1-Day VaR"),
+       col=c("black","black","maroon","red","darkgray","black"),
+       lty=c(1,3,1,2,3,4))
+
+```

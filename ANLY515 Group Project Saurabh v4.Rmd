@@ -1,0 +1,331 @@
+---
+title: "ANLY515 Group Project Saurabh v4"
+author: "Saurabh Shirish Prabhu"
+date: "`r Sys.Date()`"
+output: word_document
+---
+```{r setup, include=FALSE}
+rm(list=ls()) 
+knitr::opts_chunk$set(echo = TRUE)
+dir.create(tempdir())
+```
+
+Importing data from Yahoo finance:
+
+```{r}
+getwd()
+setwd('F:/a_Harrisburg_University_Academics/ANLY 515-51- A-2024Spring - Risk Modeling and Assessment/Final Project/Code')
+getwd()
+```
+This section contains
+Roburst prtfolio optimization
+Part B – Suitable distributions for returns
+
+
+
+Select two market sectors from the 11 sectors identified on this
+reference o <https://www.bloomberg.com/markets/sectors>
+
+Answer:
+
+[1]Information Technology<br>
+
+1.1 Semiconductors & Semiconductor Equipment: NVIDIA Corporation (NVDA)<br>
+1.2 Software & Services: Microsoft Corporation (MSFT)<br>
+1.3 Software & Services: Apple Inc. (AAPL)<br>
+1.4 Software & Services: Netflix Inc. (NFLX)<br>
+
+
+[2]Financials<br>
+
+2.1 Insurance: Berkshire Hathaway Inc. (BRK.B)<br>
+2.2 Banks: JPMorgan Chase & Co. (JPM)<br>
+2.3 Banks: CitiGroup Inc. (C)<br>
+2.4 Insurance: BlackRock Inc. (BLK)<br>
+
+
+
+[3]Consumer Discretionary:<br>
+
+3.1 Retailing: McDonald's Corporation (MCD)<br>
+3.2 Consumer Durables & Apparel: Skechers U.S.A., Inc. (SKX)<br>
+3.3 Retailing: Starbucks Corp. (SBUX) <br>
+3.4 Consumer Durables & Apparel: Nike Inc. (NKE)
+
+
+
+[4]Industrials: <br>
+
+4.1 Capital Goods: Cummins Inc. (CMI)<br>
+4.2 Capital Goods:Deere & Company (DE)<br>
+
+
+References: <br>
+[1]<https://stockanalysis.com/stocks/industry/><br>
+[2]<https://medium.com/\@sil.soham/importing-and-visualising-stock-market-data-in-r-ac5a22e23cd><br>
+
+
+Import all necessary libraries
+
+```{r}
+library(quantmod)
+library(xts)
+library(dplyr)
+library(corrplot)
+```
+Load all stocks
+
+
+
+• Confirm that there is no missing data<br> 
+• Check the dimensions to
+verify that the data covers 5 years<br>
+```{r}
+
+start <- as.Date("2014-12-31",format="%Y-%m-%d")
+end <- as.Date("2023-12-31",format="%Y-%m-%d")
+
+# Use getSymbols to retrieve the data
+
+# [1]Information Technology
+data.NVDA <- getSymbols("NVDA", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.MSFT <- getSymbols("MSFT", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.AAPL <- getSymbols("AAPL", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NFLX <- getSymbols("NFLX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [2]Financials
+data.BRK_B <- getSymbols("BRK-B", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.JPM <- getSymbols("JPM", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.C <- getSymbols("C", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.BLK <- getSymbols("BLK", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [3]Consumer Discretionary:
+data.MCD <- getSymbols("MCD", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SKX <- getSymbols("SKX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SBUX <- getSymbols("SBUX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NKE <- getSymbols("NKE", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+# Assign the class "xts" and "zoo" explicitly
+# class(data.NVDA) <- c("xts", "zoo")
+# Print the class of the assigned variable
+class(data.NVDA)
+
+
+
+names(data.BRK_B)
+names(data.BRK_B) <- paste(c("BRK_B.Open","BRK_B.High","BRK_B.Low","BRK_B.Close","BRK_B.Volume","BRK_B.Adjusted"))
+names(data.BRK_B)
+
+```
+```{r}
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Adjusted.Prices <- data.NVDA$NVDA.Adjusted
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.MSFT$MSFT.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.AAPL$AAPL.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.NFLX$NFLX.Adjusted)
+# Infotech.Adjusted.Prices[c(1:3,nrow(Infotech.Adjusted.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Adjusted.Prices <- data.BRK_B$BRK_B.Adjusted
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.JPM$JPM.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.C$C.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.BLK$BLK.Adjusted)
+# Financials.Adjusted.Prices[c(1:3,nrow(Financials.Adjusted.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Adjusted.Prices <- data.MCD$MCD.Adjusted
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SKX$SKX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SBUX$SBUX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.NKE$NKE.Adjusted)
+# Consumer.Adjusted.Prices[c(1:3,nrow(Consumer.Adjusted.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.Adj.all <- cbind(Infotech.Adjusted.Prices,Financials.Adjusted.Prices,Consumer.Adjusted.Prices)
+Portfolio.Adj.all[c(1:3,nrow(Portfolio.Adj.all)),]
+
+str(Portfolio.Adj.all)
+summary(Portfolio.Adj.all)
+```
+Portfolio simulation: robust vs classical statistics
+Load the required packages
+```{r}
+library(copula)
+library(quadprog)
+library(rrcov)
+```
+Copula objects for the Gauss and Student’s t copula are created and named ncop and tcop, respectively.
+```{r}
+ncop <- normalCopula(param = 0.5, dim = 5)
+tcop <- tCopula(param = 0.5, dim = 5, df = 5, df.fixed = TRUE)
+
+
+# The DGPs are created by utilizing the function mvdc(). This requires an object of class copula and a list object that contains the parameter information about the marginal distributions assumed. The objects are labeled NcopMargN, NcopMargT, and TcopMargT for the three multivariate distribution models.
+# 
+# mvdc: Density, distribution function, and random generator for a multivariate distribution via copula and parametric margins.
+
+
+NcopMargN <- mvdc(ncop, margins = "norm",
+                  paramMargins = list(list(mean = 0, sd = 1)),
+                  marginsIdentical = TRUE)
+NcopMargT <- mvdc(ncop, margins = "t",
+                  paramMargins = list(df = 5),
+                  marginsIdentical = TRUE)
+TcopMargT <- mvdc(tcop, margins = "t",
+                  paramMargins = list(df = 5),
+                  marginsIdentical = TRUE)
+# The objects created are then employed to draw the random samples. In order to do so, first a list object, Lobj, is created and the size of the simulation is assigned as its length.
+# 
+# A seed is set for replication purposes.
+
+Lobj <- list()
+length(Lobj) <- 1000
+set.seed(12345)
+
+
+
+# In principle, the 1000 random samples for each of the DGPs could be assigned as list elements with a for loop, but it is more in the nature of R to use lapply() instead. In the last three lines the list object Lobj is used for this purpose and the results are stored in the objects rNcopMargN, rN- copMargT, and rTcopMargT. These list objects consist of 1000 samples for each of the DGPs with 240 rows and five columns for the fictional asset returns. Sample data for the shorter sample spans can then be swiftly extracted from the list elements.
+
+rNcopMargN <- lapply(Lobj, function(x) rMvdc(240, NcopMargN))
+rNcopMargT <- lapply(Lobj, function(x) rMvdc(240, NcopMargT))
+rTcopMargT <- lapply(Lobj, function(x) rMvdc(240, TcopMargT))
+
+```
+
+
+As the next step, a function is created that returns the dispersion estimates for the classical and robust methods.
+
+This function can then be applied for the simulated data sets for each of the DGPs and then used for optimizing the minimum-variance portfolios. The comparative simulation will encompass the classical estimators and the M-, MM, S-, MCD, MVE, SD, and OGK robust estimators.
+
+The function is specified with three arguments. The first, x, is used for the random data set, the second for determining what kind of estimator is employed, and the third is the ellipsis argument that is passed down to do.call() so that the user has command of the arguments of the estimating function.
+
+In the first line of the function body, partial matching for the name of the estimating function is included.
+
+In the second line, the function determined by the argument method is applied to the data set x. Finally, the estimate is extracted from the object ans by means of the access function getCov() and its result is returned.
+```{r}
+Moments <- function(x, method = c("CovClassic", "CovMcd",
+                    "CovMest", "CovMMest", "CovMve", "CovOgk",
+                    "CovSde", "CovSest"), ...){
+  method <- match.arg(method)
+  ans <- do.call(method, list(x = x, ...))
+  return(getCov(ans))
+}
+
+# The function can now be used to estimate the second moment (variance) for each of the list elements and for each of the DGPs and sample sizes.
+# 
+# The dimension of the simulation study is defined: there are three models for the multivariate distributions, DGP. These list objects were created in earlier steps. Each list object contains 1000 elements in the form of (240 × 5) matrices.
+
+
+DGP <- c("rNcopMargN", "rTcopMargT")
+
+
+# The function names of the estimators to be used are collected in the character vector EST.
+# 
+# The sample sizes are set in the numeric vector SAMPLE.
+
+EST <- c("CovClassic", "CovMcd", "CovMest", "CovMMest",
+         "CovMve", "CovOgk", "CovSde", "CovSest")
+SAMPLE <- c(60, 120, 240)
+```
+
+
+In the first double for loop, the object names are created and displayed by the cat() function so that the user can better track the progress of the loop. In addition, the names of these list objects are saved in the vector datnames for use in the second for loop construction.
+
+In the last line, lapply() is used to extract for each list element and for each DGP the number of rows according to SAMPLE. Thus, after the execution of the loop has finished, nine new list objects have been created. With these data sets at hand, one can now proceed and estimate the moments for each single list element.
+```{r}
+datnames <- NULL
+for(i in DGP){
+  for(j in SAMPLE){
+    objname <- paste(i, j, sep = "")
+    datnames <- c(datnames, objname)
+    cat(paste("Creating list object", objname, "\n"))
+    assign(objname, lapply(eval(as.name(i)), function(x) x[1:j, ]))
+  }
+}
+```
+The names of the list objects that will store the estimates for the mean and covariance are created, and these names are displayed to enable progress monitoring when the for loop is executed.
+
+Similar to the first loop, the names of these objects are saved in the character vector objnames.
+
+In the final line, lapply() is used to apply the function Moments() to each list element for each of the DGPs and sample sizes. After the successful completion of this loop, a total of 3 × 3 × 8 = 72 list objects have been created and each contains a dispersion estimate.
+
+The portfolio optimizations are then conducted with respect to these 72 objects, which implies a total of 72 000 optimizations to be done.
+```{r}
+objnames <- NULL
+for(i in datnames){
+  for(j in EST){
+    objname <- paste(j, i, sep = "")
+    objnames <- c(objnames, objname)
+    cat(paste("Creating list object", objname, "\n"))
+    assign(objname, lapply(eval(as.name(i)), Moments, method = j))
+  }
+}
+```
+The optimization is carried out by employing cccp() from the package cccp. The minimum-variance optimization takes place under the constraints of being fully invested (objects a1 and b1) and with only long positions allowed (objects nno1). The function returns the weight vector.
+
+cccp: This function is the main function for defining and solving convex problems in the form of either linear or quadratic programs with cone constraints.
+```{r}
+PortMinVar <- function(x){
+  Dmat <- x
+  k <- ncol(Dmat)
+  dvec <- rep.int(0, k)
+  a1 <- rep.int(1, k)
+  b1 <- 1
+  a2 <- diag(k)
+  b2 <- rep.int(0, k)
+  Amat <- t(rbind(a1, a2))
+  bvec <- c(b1, b2)
+  opt <- solve.QP(Dmat = Dmat, dvec = dvec, Amat = Amat,
+                  bvec = bvec, meq = 1)
+  return(opt$solution)
+}
+```
+In the for loop the optimizations are carried out and the 1000 portfolio risk figures are stored for each of the DGP, estimator, and sample size combinations.
+```{r}
+portnames <- NULL
+idx <- 1:1000
+for(i in objnames){
+    objname <- paste("Port", i, sep = "")
+    portnames <- c(portnames, objname)
+    obj <- eval(as.name(i))
+    weights <- lapply(obj, PortMinVar)
+    assign(objname, sapply(idx, function(x)
+                    sqrt(t(weights[[x]]) %*% obj[[x]] %*%
+                         weights[[x]])))
+}
+```
+
+The median and interquartile range (IQR) are computed for the portfolio risks.
+```{r}
+mednames <- NULL
+iqrnames <- NULL
+for(i in portnames){
+  objname1 <- paste("Med", i, sep = "")
+  objname2 <- paste("IQR", i, sep = "")
+  mednames <- c(mednames, objname1)
+  iqrnames <- c(iqrnames, objname2)
+  assign(objname1, median(eval(as.name(i))))
+  assign(objname2, IQR(eval(as.name(i))))
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,797 @@
+---
+title: "ANLY515_GroupProject_Saurabh v6 ARCH GARCH"
+author: "Saurabh Shirish Prabhu"
+date: '`r Sys.Date()`'
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+rm(list=ls()) 
+knitr::opts_chunk$set(echo = TRUE)
+dir.create(tempdir())
+```
+
+Importing data from Yahoo finance:
+
+```{r}
+getwd()
+setwd('F:/a_Harrisburg_University_Academics/ANLY 515-51- A-2024Spring - Risk Modeling and Assessment/Final Project/Code')
+getwd()
+```
+This section contains
+Part A – Markowitz Mean-Variance Optimization
+Part B – Suitable distributions for returns
+
+Select two market sectors from the 11 sectors identified on this
+reference o <https://www.bloomberg.com/markets/sectors>
+
+Answer:
+
+[1]Information Technology<br>
+
+1.1 Semiconductors & Semiconductor Equipment: NVIDIA Corporation (NVDA)<br>
+1.2 Software & Services: Microsoft Corporation (MSFT)<br>
+1.3 Software & Services: Apple Inc. (AAPL)<br>
+1.4 Software & Services: Netflix Inc. (NFLX)<br>
+
+
+[2]Financials<br>
+
+2.1 Insurance: Berkshire Hathaway Inc. (BRK.B)<br>
+2.2 Banks: JPMorgan Chase & Co. (JPM)<br>
+2.3 Banks: CitiGroup Inc. (C)<br>
+2.4 Insurance: BlackRock Inc. (BLK)<br>
+
+
+
+[3]Consumer Discretionary:<br>
+
+3.1 Retailing: McDonald's Corporation (MCD)<br>
+3.2 Consumer Durables & Apparel: Skechers U.S.A., Inc. (SKX)<br>
+3.3 Retailing: Starbucks Corp. (SBUX) <br>
+3.4 Consumer Durables & Apparel: Nike Inc. (NKE)
+
+
+
+[4]Industrials: <br>
+
+4.1 Capital Goods: Cummins Inc. (CMI)<br>
+4.2 Capital Goods:Deere & Company (DE)<br>
+
+
+References: <br>
+[1]<https://stockanalysis.com/stocks/industry/><br>
+[2]<https://medium.com/\@sil.soham/importing-and-visualising-stock-market-data-in-r-ac5a22e23cd><br>
+
+
+Import all necessary libraries
+
+```{r}
+library(quantmod)
+library(xts)
+library(dplyr)
+library(corrplot)
+
+
+library(FRAPO)
+library(readr)
+library(timeSeries)
+```
+
+Load all stocks
+
+
+
+• Confirm that there is no missing data<br> 
+• Check the dimensions to
+verify that the data covers 5 years<br>
+```{r}
+
+start <- as.Date("2014-12-31",format="%Y-%m-%d")
+end <- as.Date("2023-12-31",format="%Y-%m-%d")
+
+# Use getSymbols to retrieve the data
+
+# [1]Information Technology
+data.NVDA <- getSymbols("NVDA", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.MSFT <- getSymbols("MSFT", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.AAPL <- getSymbols("AAPL", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NFLX <- getSymbols("NFLX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [2]Financials
+data.BRK_B <- getSymbols("BRK-B", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.JPM <- getSymbols("JPM", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.C <- getSymbols("C", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.BLK <- getSymbols("BLK", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [3]Consumer Discretionary:
+data.MCD <- getSymbols("MCD", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SKX <- getSymbols("SKX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SBUX <- getSymbols("SBUX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NKE <- getSymbols("NKE", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+# Assign the class "xts" and "zoo" explicitly
+# class(data.NVDA) <- c("xts", "zoo")
+# Print the class of the assigned variable
+class(data.NVDA)
+
+
+
+names(data.BRK_B)
+names(data.BRK_B) <- paste(c("BRK_B.Open","BRK_B.High","BRK_B.Low","BRK_B.Close","BRK_B.Volume","BRK_B.Adjusted"))
+names(data.BRK_B)
+
+```
+```{r}
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Adjusted.Prices <- data.NVDA$NVDA.Adjusted
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.MSFT$MSFT.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.AAPL$AAPL.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.NFLX$NFLX.Adjusted)
+# Infotech.Adjusted.Prices[c(1:3,nrow(Infotech.Adjusted.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Adjusted.Prices <- data.BRK_B$BRK_B.Adjusted
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.JPM$JPM.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.C$C.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.BLK$BLK.Adjusted)
+# Financials.Adjusted.Prices[c(1:3,nrow(Financials.Adjusted.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Adjusted.Prices <- data.MCD$MCD.Adjusted
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SKX$SKX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SBUX$SBUX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.NKE$NKE.Adjusted)
+# Consumer.Adjusted.Prices[c(1:3,nrow(Consumer.Adjusted.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.Adj.all <- cbind(Infotech.Adjusted.Prices,Financials.Adjusted.Prices,Consumer.Adjusted.Prices)
+Portfolio.Adj.all[c(1:3,nrow(Portfolio.Adj.all)),]
+
+str(Portfolio.Adj.all)
+summary(Portfolio.Adj.all)
+```
+Individual Returns
+```{r}
+port.df <- data.frame(date = index(Portfolio.Adj.all), coredata(Portfolio.Adj.all))
+port.df[c(1:3,nrow(port.df)),]
+
+
+Port.rets <-port.df
+date<-Port.rets$date
+# str(date)
+
+PortRet.price <- Port.rets[,-1]
+
+
+attr(PortRet.price, 'time')<-date   ##add time attribute to dataset
+# str(PortRet.price)
+
+prc2ret <- function(x) Delt(x)
+
+
+Port.rets.all <- apply(PortRet.price,2,function(x) {prc2ret(c(x))})
+
+
+
+colnames(Port.rets.all) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+
+## Add date column
+Port.rets.all = data.frame(Port.rets.all)
+Port.rets.all$date <- port.df$date
+
+attr(Port.rets.all, 'time')<-date
+head(Port.rets.all)
+
+
+### reorder to get date in first column
+# Get the index of the 'date' column
+date_column_index <- which(names(Port.rets.all) == "date")
+
+# Move 'date' column to the first position
+new_order <- c(date_column_index, 1:(ncol(Port.rets.all)-1)[-date_column_index+1])
+
+# Rearrange the columns of the data frame
+Port.rets.df <- Port.rets.all[, new_order]
+Port.rets.df <- Port.rets.df[-1,]
+head(Port.rets.df)
+
+
+ewport <-Port.rets.df[-1,]+1
+head(ewport)
+
+```
+
+Create a vector of weights min variance portfolio
+
+
+year 1 inv / returns
+```{r}
+
+### Year 1 
+
+ew.y1<- subset(ewport,
+                ewport$date >= as.Date("2014-12-31") &
+                ewport$date <= as.Date("2015-12-31"))
+
+ew.y1[1, 2:ncol(ew.y1)] <- 1
+
+# Apply cumprod to selected columns
+columns_to_cumprod <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+
+ew.y1[columns_to_cumprod] <- cumprod(ew.y1[columns_to_cumprod])   ## Simplified previous code
+
+# Select specific rows and columns
+# ew.y1[c(1:3, nrow(ew.y1)), ]
+
+num.sec = 12
+
+ew.y1$NVDA.idx <- (1/num.sec)*(ew.y1$NVDA)  ##(q1.inv/num.sec)
+ew.y1$MSFT.idx <- (1/num.sec)*(ew.y1$MSFT)
+ew.y1$AAPL.idx <- (1/num.sec)*(ew.y1$AAPL)
+ew.y1$NFLX.idx <- (1/num.sec)*(ew.y1$NFLX)
+
+ew.y1$BRK_B.idx <- (1/num.sec)*(ew.y1$BRK_B)
+ew.y1$JPM.idx <- (1/num.sec)*(ew.y1$JPM)
+ew.y1$C.idx <- (1/num.sec)*(ew.y1$C)
+ew.y1$BLK.idx <- (1/num.sec)*(ew.y1$BLK)
+
+ew.y1$MCD.idx <- (1/num.sec)*(ew.y1$MCD)
+ew.y1$SKX.idx <- (1/num.sec)*(ew.y1$SKX)
+ew.y1$SBUX.idx <- (1/num.sec)*(ew.y1$SBUX)
+ew.y1$NKE.idx <- (1/num.sec)*(ew.y1$NKE)
+
+
+# ew.y1[c(1:3, nrow(ew.y1)), ]
+
+y1.val <- data.frame(rowSums(ew.y1[,(ncol(ew.y1)-num.sec+1):ncol(ew.y1)]))
+# y1.val[c(1:3,nrow(y1.val)),]
+
+
+names(y1.val) <- paste("port.val")
+y1.val$date <- ew.y1$date
+# y1.val[c(1:3,nrow(y1.val)),]
+y2.inv <- y1.val[nrow(y1.val),1]
+# y2.inv
+
+##year 2 - 2016
+
+ew.y2 <- subset(ewport,
+                ewport$date >= as.Date("2016-01-01") &
+                ewport$date <= as.Date("2016-12-31"))
+# ew.y2[c(1:3,nrow(ew.y2)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y2[columns_to_cumprod2] <- cumprod(ew.y2[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y2$NVDA.idx <- (y2.inv/num.sec)*(ew.y2$NVDA)  ##(q1.inv/num.sec)
+ew.y2$MSFT.idx <- (y2.inv/num.sec)*(ew.y2$MSFT)
+ew.y2$AAPL.idx <- (y2.inv/num.sec)*(ew.y2$AAPL)
+ew.y2$NFLX.idx <- (y2.inv/num.sec)*(ew.y2$NFLX)
+
+ew.y2$BRK_B.idx <- (y2.inv/num.sec)*(ew.y2$BRK_B)
+ew.y2$JPM.idx <- (y2.inv/num.sec)*(ew.y2$JPM)
+ew.y2$C.idx <- (y2.inv/num.sec)*(ew.y2$C)
+ew.y2$BLK.idx <- (y2.inv/num.sec)*(ew.y2$BLK)
+
+ew.y2$MCD.idx <- (y2.inv/num.sec)*(ew.y2$MCD)
+ew.y2$SKX.idx <- (y2.inv/num.sec)*(ew.y2$SKX)
+ew.y2$SBUX.idx <- (y2.inv/num.sec)*(ew.y2$SBUX)
+ew.y2$NKE.idx <- (y2.inv/num.sec)*(ew.y2$NKE)
+
+# ew.y2[c(1:3, nrow(ew.y2)), ]
+
+y2.val <- data.frame(rowSums(ew.y2[,(ncol(ew.y2)-num.sec+1):ncol(ew.y2)]))
+# y2.val[c(1:3,nrow(y2.val)),]
+names(y2.val) <- paste("port.val")
+y2.val$date <- ew.y2$date
+# y2.val[c(1:3,nrow(y2.val)),]
+
+
+y3.inv <- y2.val[nrow(y2.val),1]
+# y3.inv
+
+
+## Year 3 - 2017
+
+ew.y3 <- subset(ewport,
+                ewport$date >= as.Date("2017-01-01") &
+                ewport$date <= as.Date("2017-12-31"))
+# ew.y3[c(1:3,nrow(ew.y3)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y3[columns_to_cumprod2] <- cumprod(ew.y3[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y3$NVDA.idx <- (y3.inv/num.sec)*(ew.y3$NVDA)  ##(q1.inv/num.sec)
+ew.y3$MSFT.idx <- (y3.inv/num.sec)*(ew.y3$MSFT)
+ew.y3$AAPL.idx <- (y3.inv/num.sec)*(ew.y3$AAPL)
+ew.y3$NFLX.idx <- (y3.inv/num.sec)*(ew.y3$NFLX)
+
+ew.y3$BRK_B.idx <- (y3.inv/num.sec)*(ew.y3$BRK_B)
+ew.y3$JPM.idx <- (y3.inv/num.sec)*(ew.y3$JPM)
+ew.y3$C.idx <- (y3.inv/num.sec)*(ew.y3$C)
+ew.y3$BLK.idx <- (y3.inv/num.sec)*(ew.y3$BLK)
+
+ew.y3$MCD.idx <- (y3.inv/num.sec)*(ew.y3$MCD)
+ew.y3$SKX.idx <- (y3.inv/num.sec)*(ew.y3$SKX)
+ew.y3$SBUX.idx <- (y3.inv/num.sec)*(ew.y3$SBUX)
+ew.y3$NKE.idx <- (y3.inv/num.sec)*(ew.y3$NKE)
+
+# ew.y3[c(1:3, nrow(ew.y3)), ]
+
+y3.val <- data.frame(rowSums(ew.y3[,(ncol(ew.y3)-num.sec+1):ncol(ew.y3)]))
+# y3.val[c(1:3,nrow(y3.val)),]
+names(y3.val) <- paste("port.val")
+y3.val$date <- ew.y3$date
+# y3.val[c(1:3,nrow(y3.val)),]
+
+y4.inv <- y3.val[nrow(y3.val),1]
+# y4.inv
+
+## Year 4 -2018
+
+ew.y4 <- subset(ewport,
+                ewport$date >= as.Date("2018-01-01") &
+                ewport$date <= as.Date("2018-12-31"))
+# ew.y4[c(1:3,nrow(ew.y4)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y4[columns_to_cumprod2] <- cumprod(ew.y4[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y4$NVDA.idx <- (y4.inv/num.sec)*(ew.y4$NVDA)  ##(q1.inv/num.sec)
+ew.y4$MSFT.idx <- (y4.inv/num.sec)*(ew.y4$MSFT)
+ew.y4$AAPL.idx <- (y4.inv/num.sec)*(ew.y4$AAPL)
+ew.y4$NFLX.idx <- (y4.inv/num.sec)*(ew.y4$NFLX)
+
+ew.y4$BRK_B.idx <- (y4.inv/num.sec)*(ew.y4$BRK_B)
+ew.y4$JPM.idx <- (y4.inv/num.sec)*(ew.y4$JPM)
+ew.y4$C.idx <- (y4.inv/num.sec)*(ew.y4$C)
+ew.y4$BLK.idx <- (y4.inv/num.sec)*(ew.y4$BLK)
+
+ew.y4$MCD.idx <- (y4.inv/num.sec)*(ew.y4$MCD)
+ew.y4$SKX.idx <- (y4.inv/num.sec)*(ew.y4$SKX)
+ew.y4$SBUX.idx <- (y4.inv/num.sec)*(ew.y4$SBUX)
+ew.y4$NKE.idx <- (y4.inv/num.sec)*(ew.y4$NKE)
+
+# ew.y4[c(1:3, nrow(ew.y4)), ]
+
+y4.val <- data.frame(rowSums(ew.y4[,(ncol(ew.y4)-num.sec+1):ncol(ew.y4)]))
+# y4.val[c(1:3,nrow(y4.val)),]
+names(y4.val) <- paste("port.val")
+y4.val$date <- ew.y4$date
+# y4.val[c(1:3,nrow(y4.val)),]
+
+y5.inv <- y4.val[nrow(y4.val),1]
+# y5.inv
+
+
+## Year 5 -2019
+
+ew.y5 <- subset(ewport,
+                ewport$date >= as.Date("2019-01-01") &
+                ewport$date <= as.Date("2019-12-31"))
+# ew.y5[c(1:3,nrow(ew.y5)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y5[columns_to_cumprod2] <- cumprod(ew.y5[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y5$NVDA.idx <- (y5.inv/num.sec)*(ew.y5$NVDA)  ##(q1.inv/num.sec)
+ew.y5$MSFT.idx <- (y5.inv/num.sec)*(ew.y5$MSFT)
+ew.y5$AAPL.idx <- (y5.inv/num.sec)*(ew.y5$AAPL)
+ew.y5$NFLX.idx <- (y5.inv/num.sec)*(ew.y5$NFLX)
+
+ew.y5$BRK_B.idx <- (y5.inv/num.sec)*(ew.y5$BRK_B)
+ew.y5$JPM.idx <- (y5.inv/num.sec)*(ew.y5$JPM)
+ew.y5$C.idx <- (y5.inv/num.sec)*(ew.y5$C)
+ew.y5$BLK.idx <- (y5.inv/num.sec)*(ew.y5$BLK)
+
+ew.y5$MCD.idx <- (y5.inv/num.sec)*(ew.y5$MCD)
+ew.y5$SKX.idx <- (y5.inv/num.sec)*(ew.y5$SKX)
+ew.y5$SBUX.idx <- (y5.inv/num.sec)*(ew.y5$SBUX)
+ew.y5$NKE.idx <- (y5.inv/num.sec)*(ew.y5$NKE)
+
+# ew.y5[c(1:3, nrow(ew.y5)), ]
+
+y5.val <- data.frame(rowSums(ew.y5[,(ncol(ew.y5)-num.sec+1):ncol(ew.y5)]))
+# y5.val[c(1:3,nrow(y5.val)),]
+names(y5.val) <- paste("port.val")
+y5.val$date <- ew.y5$date
+# y5.val[c(1:3,nrow(y5.val)),]
+
+y6.inv <- y5.val[nrow(y5.val),1]
+# y6.inv
+
+
+## Year 6 -2020
+
+ew.y6 <- subset(ewport,
+                ewport$date >= as.Date("2020-01-01") &
+                ewport$date <= as.Date("2020-12-31"))
+# ew.y6[c(1:3,nrow(ew.y6)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y6[columns_to_cumprod2] <- cumprod(ew.y6[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y6$NVDA.idx <- (y6.inv/num.sec)*(ew.y6$NVDA)  ##(q1.inv/num.sec)
+ew.y6$MSFT.idx <- (y6.inv/num.sec)*(ew.y6$MSFT)
+ew.y6$AAPL.idx <- (y6.inv/num.sec)*(ew.y6$AAPL)
+ew.y6$NFLX.idx <- (y6.inv/num.sec)*(ew.y6$NFLX)
+
+ew.y6$BRK_B.idx <- (y6.inv/num.sec)*(ew.y6$BRK_B)
+ew.y6$JPM.idx <- (y6.inv/num.sec)*(ew.y6$JPM)
+ew.y6$C.idx <- (y6.inv/num.sec)*(ew.y6$C)
+ew.y6$BLK.idx <- (y6.inv/num.sec)*(ew.y6$BLK)
+
+ew.y6$MCD.idx <- (y6.inv/num.sec)*(ew.y6$MCD)
+ew.y6$SKX.idx <- (y6.inv/num.sec)*(ew.y6$SKX)
+ew.y6$SBUX.idx <- (y6.inv/num.sec)*(ew.y6$SBUX)
+ew.y6$NKE.idx <- (y6.inv/num.sec)*(ew.y6$NKE)
+
+# ew.y6[c(1:3, nrow(ew.y6)), ]
+
+y6.val <- data.frame(rowSums(ew.y6[,(ncol(ew.y6)-num.sec+1):ncol(ew.y6)]))
+# y6.val[c(1:3,nrow(y6.val)),]
+names(y6.val) <- paste("port.val")
+y6.val$date <- ew.y6$date
+# y6.val[c(1:3,nrow(y6.val)),]
+
+y7.inv <- y6.val[nrow(y6.val),1]
+# y7.inv
+
+
+## Year 7 -2021
+
+ew.y7 <- subset(ewport,
+                ewport$date >= as.Date("2021-01-01") &
+                ewport$date <= as.Date("2021-12-31"))
+# ew.y7[c(1:3,nrow(ew.y7)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y7[columns_to_cumprod2] <- cumprod(ew.y7[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y7$NVDA.idx <- (y7.inv/num.sec)*(ew.y7$NVDA)  ##(q1.inv/num.sec)
+ew.y7$MSFT.idx <- (y7.inv/num.sec)*(ew.y7$MSFT)
+ew.y7$AAPL.idx <- (y7.inv/num.sec)*(ew.y7$AAPL)
+ew.y7$NFLX.idx <- (y7.inv/num.sec)*(ew.y7$NFLX)
+
+ew.y7$BRK_B.idx <- (y7.inv/num.sec)*(ew.y7$BRK_B)
+ew.y7$JPM.idx <- (y7.inv/num.sec)*(ew.y7$JPM)
+ew.y7$C.idx <- (y7.inv/num.sec)*(ew.y7$C)
+ew.y7$BLK.idx <- (y7.inv/num.sec)*(ew.y7$BLK)
+
+ew.y7$MCD.idx <- (y7.inv/num.sec)*(ew.y7$MCD)
+ew.y7$SKX.idx <- (y7.inv/num.sec)*(ew.y7$SKX)
+ew.y7$SBUX.idx <- (y7.inv/num.sec)*(ew.y7$SBUX)
+ew.y7$NKE.idx <- (y7.inv/num.sec)*(ew.y7$NKE)
+
+# ew.y7[c(1:3, nrow(ew.y7)), ]
+
+y7.val <- data.frame(rowSums(ew.y7[,(ncol(ew.y7)-num.sec+1):ncol(ew.y7)]))
+# y7.val[c(1:3,nrow(y7.val)),]
+names(y7.val) <- paste("port.val")
+y7.val$date <- ew.y7$date
+# y7.val[c(1:3,nrow(y7.val)),]
+
+y8.inv <- y7.val[nrow(y7.val),1]
+# y8.inv
+
+
+## Year 8 -2022
+
+ew.y8 <- subset(ewport,
+                ewport$date >= as.Date("2022-01-01") &
+                ewport$date <= as.Date("2022-12-31"))
+# ew.y8[c(1:3,nrow(ew.y8)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y8[columns_to_cumprod2] <- cumprod(ew.y8[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y8$NVDA.idx <- (y8.inv/num.sec)*(ew.y8$NVDA)  ##(q1.inv/num.sec)
+ew.y8$MSFT.idx <- (y8.inv/num.sec)*(ew.y8$MSFT)
+ew.y8$AAPL.idx <- (y8.inv/num.sec)*(ew.y8$AAPL)
+ew.y8$NFLX.idx <- (y8.inv/num.sec)*(ew.y8$NFLX)
+
+ew.y8$BRK_B.idx <- (y8.inv/num.sec)*(ew.y8$BRK_B)
+ew.y8$JPM.idx <- (y8.inv/num.sec)*(ew.y8$JPM)
+ew.y8$C.idx <- (y8.inv/num.sec)*(ew.y8$C)
+ew.y8$BLK.idx <- (y8.inv/num.sec)*(ew.y8$BLK)
+
+ew.y8$MCD.idx <- (y8.inv/num.sec)*(ew.y8$MCD)
+ew.y8$SKX.idx <- (y8.inv/num.sec)*(ew.y8$SKX)
+ew.y8$SBUX.idx <- (y8.inv/num.sec)*(ew.y8$SBUX)
+ew.y8$NKE.idx <- (y8.inv/num.sec)*(ew.y8$NKE)
+
+# ew.y8[c(1:3, nrow(ew.y8)), ]
+
+y8.val <- data.frame(rowSums(ew.y8[,(ncol(ew.y8)-num.sec+1):ncol(ew.y8)]))
+# y8.val[c(1:3,nrow(y8.val)),]
+names(y8.val) <- paste("port.val")
+y8.val$date <- ew.y8$date
+# y8.val[c(1:3,nrow(y8.val)),]
+
+y9.inv <- y8.val[nrow(y8.val),1]
+# y9.inv
+
+## Year 9 -2023
+
+ew.y9 <- subset(ewport,
+                ewport$date >= as.Date("2023-01-01") &
+                ewport$date <= as.Date("2023-12-31"))
+# ew.y9[c(1:3,nrow(ew.y9)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y9[columns_to_cumprod2] <- cumprod(ew.y9[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y9$NVDA.idx <- (y9.inv/num.sec)*(ew.y9$NVDA)  ##(q1.inv/num.sec)
+ew.y9$MSFT.idx <- (y9.inv/num.sec)*(ew.y9$MSFT)
+ew.y9$AAPL.idx <- (y9.inv/num.sec)*(ew.y9$AAPL)
+ew.y9$NFLX.idx <- (y9.inv/num.sec)*(ew.y9$NFLX)
+
+ew.y9$BRK_B.idx <- (y9.inv/num.sec)*(ew.y9$BRK_B)
+ew.y9$JPM.idx <- (y9.inv/num.sec)*(ew.y9$JPM)
+ew.y9$C.idx <- (y9.inv/num.sec)*(ew.y9$C)
+ew.y9$BLK.idx <- (y9.inv/num.sec)*(ew.y9$BLK)
+
+ew.y9$MCD.idx <- (y9.inv/num.sec)*(ew.y9$MCD)
+ew.y9$SKX.idx <- (y9.inv/num.sec)*(ew.y9$SKX)
+ew.y9$SBUX.idx <- (y9.inv/num.sec)*(ew.y9$SBUX)
+ew.y9$NKE.idx <- (y9.inv/num.sec)*(ew.y9$NKE)
+
+# ew.y9[c(1:3, nrow(ew.y9)), ]
+
+y9.val <- data.frame(rowSums(ew.y9[,(ncol(ew.y9)-num.sec+1):ncol(ew.y9)]))
+# y9.val[c(1:3,nrow(y9.val)),]
+names(y9.val) <- paste("port.val")
+y9.val$date <- ew.y9$date
+# y9.val[c(1:3,nrow(y9.val)),]
+
+y10.inv <- y9.val[nrow(y9.val),1]
+# y10.inv
+
+
+
+```
+
+
+
+
+
+
+```{r}
+ew.portval <- rbind(y1.val,y2.val,y3.val,y4.val,y5.val,y6.val,y7.val,y8.val,y9.val)
+ew.portval[c(1:3,nrow(ew.portval)),]
+
+
+```
+
+```{r}
+# library(FRAPO)
+
+ew.portval<-ew.portval[, c("date", "port.val")]
+
+ew.portval$Return<-returnseries(ew.portval$port.val)
+
+# library(timeSeries)
+date<-ew.portval$date
+str(date)
+
+EW.ts<-timeSeries(ew.portval[,-1], charvec = date)
+head(EW.ts)
+
+
+plot(EW.ts)
+```
+
+
+```{r}
+
+acf(EW.ts$Return, na.action = na.pass)
+pacf(EW.ts$Return, na.action = na.pass)
+acf(abs(EW.ts$Return), na.action = na.pass)
+pacf(abs(EW.ts$Return), na.action = na.pass)
+mean(EW.ts$Return, na.rm = TRUE)
+
+
+```
+
+ARIMA model
+Load package: forecast
+
+auto.arima: Returns best ARIMA model according to either the Akaike information criterion (AIC), AICc or Bayesian information criterion (BIC) or Schwarz information criterion value. The function conducts a search over possible model within the order constraints provided.
+
+AICc: adds a correction term that converges to the AIC answer for large samples, but gives a more accurate answer for smaller samples
+
+predict is a generic function for predictions from the results of various model fitting functions. The function invokes particular methods which depend on the class of the first argument
+
+Time series prediction methods in package stats have an argument n.ahead specifying how many time steps ahead to predict
+
+Value: A time series of predictions, or if se.fit = TRUE, a list with components pred, the predictions, and se, the estimated standard errors. Both components are time series.
+
+```{r}
+library(forecast)
+
+EW.ts.arima<-auto.arima(EW.ts$Return)
+class(EW.ts.arima)
+predict(EW.ts.arima, n.ahead=2)
+```
+```{r}
+str(EW.ts$Return)
+EW.tsComp<-removeNA(EW.ts)
+head(EW.tsComp)
+
+```
+
+
+
+
+```{r}
+library(fGarch)
+garchEW.ts<-garchFit(~garch(1,1), data=EW.tsComp[,2])
+a<-coef(garchEW.ts)
+b<-formula(garchEW.ts)
+c<-volatility(garchEW.ts)
+
+# c(a,b,c)
+```
+
+```{r}
+a
+b
+c
+```
+```{r}
+plot(c)
+predict(garchEW.ts)
+predict(garchEW.ts, n.ahead = 1)
+```
+GARCH fit using std distribution
+cond.dist: a character string naming the desired conditional distribution. Valid values are “dnorm”, “dged”, “dstd”, “dsnorm”, “dsged”, “dsstd” and “QMLE”. The default value is the normal distribution.
+```{r}
+
+# garchEW.ts<-garchFit(~garch(1,1), data=EW.tsComp[,2])
+garchEW.ts2<-garchFit(~garch(1,1), data=EW.tsComp[,2], cond.dist = "std")
+
+```
+
+EW.tsComp[,2]
+
+```{r}
+sigma <-  as.numeric(predict(garchEW.ts2, n.ahead = 1)[3])
+df <- as.numeric(coef(garchEW.ts2)["shape"])
+rand<-rt(100000, df=df)
+hist(rand, breaks=100)
+```
+
+
+
+
+VaR
+```{r}
+quant<-qt(.01, df=df)
+a<-sigma*quant #VaR
+b<-max(tail(sort(rand, decreasing = T),1000))*sigma #VaR
+a/b
+
+
+```
+ES
+```{r}
+d<-mean(tail(sort(rand, decreasing = T),1000))*sigma #ES
+head(d/c)
+
+```
+
+EXAMPLE 2: 
+
+
+```{r}
+EW.ts_garch<-garchFit(~garch(1,1), data=EW.tsComp[,2],trace=FALSE)
+predict(EW.ts_garch, n.ahead = 20, plot = TRUE)
+
+```
+
+The prediction is that the series will decrease slightly in the next few time periods. Note how the GARCH component of our model causes our confidence interval to widen significantly over the next few time intervals.
+
+
+
+EXAMPLE 3: 
+
+ACF in waves, and first spike of PACF is significant. AR(1) is recommended.
+
+The second spike of PACF is significant too, but is just marginally significant. For model simplicity purpose, AR(1) is recommended.
+
+Lower order GARCH such as GARCH(1,1),GARCH(2,1),and GARCH(1,2) are recommended for testing.
+
+
+```{r}
+library(astsa)
+EW_ret <- EW.ts$Return[-1]
+
+acf2(EW_ret)
+```
+ACF in waves, and first spike of PACF is significant. AR(1) is recommended.
+
+The second spike of PACF is significant too. For model simplicity purpose, AR(1) is recommended.
+
+Lower order GARCH such as GARCH(1,1),GARCH(2,1),and GARCH(1,2) are recommended for testing.
+
+
+```{r}
+summary(EW_ret.g1<-garchFit(~arma(1,0)+garch(1,1),data=EW_ret,cond.dist="std"))
+
+```
+
+You can also try other model like GARCH(1,2), but notice that beta2 in the final result is not significant. Thus, we still need to use GARCH(1,1)
+
+
+```{r}
+summary(EW_ret.g2<-garchFit(~arma(1,0)+garch(1,2),data=EW_ret,cond.dist="std"))
+```
+
+```{r}
+predict(EW_ret.g1,n.ahead=10,plot = TRUE)
+predict(EW_ret.g2,n.ahead=10,plot = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

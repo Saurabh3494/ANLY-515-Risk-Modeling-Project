@@ -1,0 +1,1290 @@
+---
+title: "ANLY515 Group Project Saurabh v7 Diversification Reconsideration"
+author: "Saurabh Shirish Prabhu"
+date: "`r Sys.Date()`"
+output: word_document
+---
+```{r setup, include=FALSE}
+rm(list=ls()) 
+knitr::opts_chunk$set(echo = TRUE)
+dir.create(tempdir())
+```
+
+Importing data from Yahoo finance:
+
+```{r}
+getwd()
+setwd('F:/a_Harrisburg_University_Academics/ANLY 515-51- A-2024Spring - Risk Modeling and Assessment/Final Project/Code')
+getwd()
+```
+This section contains
+Lecture-11---Diversification-Reconsidered
+
+Portfolios
+Examples :
+
+The global-minimum variance portfolio.
+
+The most diversified Portfolio,
+
+The equal-risk contributed Portfolio
+
+Minimum tail-dependent portfolio
+
+All optimization approaches have a common goal, namely to minimize the investor’s risk through diversification
+
+Select two market sectors from the 11 sectors identified on this
+reference o <https://www.bloomberg.com/markets/sectors>
+
+Answer:
+
+[1]Information Technology<br>
+
+1.1 Semiconductors & Semiconductor Equipment: NVIDIA Corporation (NVDA)<br>
+1.2 Software & Services: Microsoft Corporation (MSFT)<br>
+1.3 Software & Services: Apple Inc. (AAPL)<br>
+1.4 Software & Services: Netflix Inc. (NFLX)<br>
+
+
+[2]Financials<br>
+
+2.1 Insurance: Berkshire Hathaway Inc. (BRK.B)<br>
+2.2 Banks: JPMorgan Chase & Co. (JPM)<br>
+2.3 Banks: CitiGroup Inc. (C)<br>
+2.4 Insurance: BlackRock Inc. (BLK)<br>
+
+
+
+[3]Consumer Discretionary:<br>
+
+3.1 Retailing: McDonald's Corporation (MCD)<br>
+3.2 Consumer Durables & Apparel: Skechers U.S.A., Inc. (SKX)<br>
+3.3 Retailing: Starbucks Corp. (SBUX) <br>
+3.4 Consumer Durables & Apparel: Nike Inc. (NKE)
+
+
+
+[4]Industrials: <br>
+
+4.1 Capital Goods: Cummins Inc. (CMI)<br>
+4.2 Capital Goods:Deere & Company (DE)<br>
+
+
+References: <br>
+[1]<https://stockanalysis.com/stocks/industry/><br>
+[2]<https://medium.com/\@sil.soham/importing-and-visualising-stock-market-data-in-r-ac5a22e23cd><br>
+
+
+Import all necessary libraries
+
+```{r}
+library(quantmod)
+library(xts)
+library(dplyr)
+library(corrplot)
+```
+
+Load all stocks
+
+
+
+• Confirm that there is no missing data<br> 
+• Check the dimensions to
+verify that the data covers 5 years<br>
+```{r}
+
+start <- as.Date("2014-12-31",format="%Y-%m-%d")
+end <- as.Date("2023-12-31",format="%Y-%m-%d")
+
+# Use getSymbols to retrieve the data
+
+# [1]Information Technology
+data.NVDA <- getSymbols("NVDA", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.MSFT <- getSymbols("MSFT", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.AAPL <- getSymbols("AAPL", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NFLX <- getSymbols("NFLX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [2]Financials
+data.BRK_B <- getSymbols("BRK-B", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.JPM <- getSymbols("JPM", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.C <- getSymbols("C", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.BLK <- getSymbols("BLK", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+
+# [3]Consumer Discretionary:
+data.MCD <- getSymbols("MCD", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SKX <- getSymbols("SKX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.SBUX <- getSymbols("SBUX", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+data.NKE <- getSymbols("NKE", src = "yahoo", from = start, to = end, auto.assign = FALSE)
+# Assign the class "xts" and "zoo" explicitly
+# class(data.NVDA) <- c("xts", "zoo")
+# Print the class of the assigned variable
+class(data.NVDA)
+
+
+
+names(data.BRK_B)
+names(data.BRK_B) <- paste(c("BRK_B.Open","BRK_B.High","BRK_B.Low","BRK_B.Close","BRK_B.Volume","BRK_B.Adjusted"))
+names(data.BRK_B)
+
+```
+```{r}
+### Sector 1: Information Technology: MSFT and NVDA
+Infotech.Adjusted.Prices <- data.NVDA$NVDA.Adjusted
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.MSFT$MSFT.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.AAPL$AAPL.Adjusted)
+Infotech.Adjusted.Prices <-cbind(Infotech.Adjusted.Prices,data.NFLX$NFLX.Adjusted)
+# Infotech.Adjusted.Prices[c(1:3,nrow(Infotech.Adjusted.Prices)),]
+
+
+
+
+##########
+### Sector 2: Financials: BRK_B and JPM
+Financials.Adjusted.Prices <- data.BRK_B$BRK_B.Adjusted
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.JPM$JPM.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.C$C.Adjusted)
+Financials.Adjusted.Prices <-cbind(Financials.Adjusted.Prices,data.BLK$BLK.Adjusted)
+# Financials.Adjusted.Prices[c(1:3,nrow(Financials.Adjusted.Prices)),]
+
+
+
+#########
+### Sector 3: Consumer Discretionary: MCD and SKX
+Consumer.Adjusted.Prices <- data.MCD$MCD.Adjusted
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SKX$SKX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.SBUX$SBUX.Adjusted)
+Consumer.Adjusted.Prices <-cbind(Consumer.Adjusted.Prices,data.NKE$NKE.Adjusted)
+# Consumer.Adjusted.Prices[c(1:3,nrow(Consumer.Adjusted.Prices)),]
+
+
+########
+### Entire portfolio
+Portfolio.Adj.all <- cbind(Infotech.Adjusted.Prices,Financials.Adjusted.Prices,Consumer.Adjusted.Prices)
+Portfolio.Adj.all[c(1:3,nrow(Portfolio.Adj.all)),]
+
+str(Portfolio.Adj.all)
+summary(Portfolio.Adj.all)
+```
+Portfolios
+Examples :
+
+The global-minimum variance portfolio.
+
+The most diversified Portfolio,
+
+The equal-risk contributed Portfolio
+
+Minimum tail-dependent portfolio
+
+All optimization approaches have a common goal, namely to minimize the investor’s risk through diversification
+
+
+```{r}
+
+library(fPortfolio)
+library(lattice)
+
+```
+
+All optimizations will be carried out with the functions provided in FRAPO. The utilized data set is contained in the package fPortfolio and the base package lattice will be employed in the graphical analysis of the results.
+
+Loading data and calculating returns
+
+interNA: NA values are interpolated
+
+Discrete daily returns are computed as well as the variance-covariance matrix
+
+Calculate return time series 
+
+```{r}
+port.df <- data.frame(date = index(Portfolio.Adj.all), coredata(Portfolio.Adj.all))
+port.df[c(1:3,nrow(port.df)),]
+
+
+Port.rets <-port.df
+date<-Port.rets$date
+# str(date)
+
+PortRet.price <- Port.rets[,-1]
+
+
+attr(PortRet.price, 'time')<-date   ##add time attribute to dataset
+# str(PortRet.price)
+
+prc2ret <- function(x) Delt(x)
+
+
+Port.rets.all <- apply(PortRet.price,2,function(x) {prc2ret(c(x))})
+
+
+
+colnames(Port.rets.all) <- c(
+                      "NVDA", "MSFT", "AAPL", "NFLX",
+                      "BRK_B",  "JPM", "C",  "BLK",
+                      "MCD",  "SKX", "SBUX",  "NKE"
+                      )
+
+## Add date column
+
+
+Port.rets.all = data.frame(Port.rets.all)
+Port.rets.all$date <- port.df$date
+
+# summary(PortRet_2013)
+# str(PortRet_2013)
+# head(PortRet_2013)
+attr(Port.rets.all, 'time')<-date
+# str(Port.rets.all)
+head(Port.rets.all)
+
+
+### reorder to get date in first column
+# Get the index of the 'date' column
+date_column_index <- which(names(Port.rets.all) == "date")
+
+# Move 'date' column to the first position
+new_order <- c(date_column_index, 1:(ncol(Port.rets.all)-1)[-date_column_index+1])
+
+# Rearrange the columns of the data frame
+Port.rets.df <- Port.rets.all[, new_order]
+
+
+# Replace NA in the first row with 1
+
+Port.rets.df <- Port.rets.df[, -1]
+Port.rets.df[1,] <- 0
+Port.rets.df <- Port.rets.df+1
+# Add the "date" column back to the dataframe
+Port.rets.df$date <- as.Date(Port.rets$date)  # Assuming "date" is already a column in Port.rets
+
+# Reorder columns to have "date" as the first column
+Port.rets.df <- Port.rets.df[, c("date", setdiff(names(Port.rets.df), "date"))]
+
+# Print the first few rows of the dataframe
+head(Port.rets.df)
+tail(Port.rets.df)
+```
+
+
+
+Calculate return time series 
+
+
+```{r}
+
+
+library(FRAPO)
+
+Idx <- interpNA(Port.rets.df[, -1], method = "before")
+R <- returnseries(Idx, method = "discrete", trim = TRUE)
+V <- cov(R)
+head(Idx)
+head(R)
+V
+```
+The allocations according to the four portfolio optimizations are then extracted by means of the Weights() method and assigned to the objects GMVw, MDPw, MTDw, and ERCw for the global-minimum variance, most-diversified, minimum tail-dependent, and equal-risk contributed solutions, respectively.
+```{r}
+GMVw <- Weights(PGMV(R))
+
+```
+```{r}
+MDPw <- Weights(PMD(R))
+```
+```{r}
+MTDw <- Weights(PMTD(R))
+```
+```{r}
+ERCw <- Weights(PERC(V))
+
+```
+The weights are then collected in the matrix object W.
+
+This object is then used in the call to the apply() function to determine the marginal risk contributions for each of the four optimal weight vectors.
+
+```{r}
+W <- cbind(GMVw, MDPw, MTDw, ERCw)
+MRC <- apply(W, 2, mrc, Sigma = V)
+rownames(MRC) <- colnames(Idx)
+colnames(MRC) <- c("GMV", "MDP", "MTD", "ERC")
+```
+
+```{r}
+# oldpar <- par(no.readonly = TRUE)
+# par(mfrow = c(2, 2))
+dotchart(GMVw, xlim = c(0, 40), main = "GMV Allocation", pch = 19)
+dotchart(MDPw - GMVw, xlim = c(-20, 20), main = "MDP vs. GMV",
+         pch = 19)
+abline(v = 0, col = "grey")
+dotchart(MTDw - GMVw, xlim = c(-20, 20), main = "MTD vs. GMV",
+         pch = 19)
+abline(v = 0, col = "grey")
+dotchart(ERCw - GMVw, xlim = c(-20, 20), main = "ERC vs. GMV",
+         pch = 19)
+abline(v = 0, col = "grey")
+```
+The weights are displayed in the form of dot charts. Usually, asset allocations are portrayed as pie charts. However, this kind of visualization is problematic, because the relation of surfaces and their sizes cannot be well digested by visual inspection.
+
+GMV: Global Minimum Variance
+
+MDP: Most Diversified Portfolio
+
+MTD: Minimum Tail Dependence
+
+ERC: Equal Risk Contribution
+
+```{r}
+# par(oldpar)
+
+```
+
+
+The marginal risk contributions (MRCs) for each of the portfolios are shown as dot plots. Here, the MRCs are ordered by sector and per portfolio optimization and by portfolio and per sector. In order to do so, the sectors and the kind of portfolio have to be coerced to factors and then this kind of lattice plot can be produced by the formula arguments in the calls to the dotplot() function which is part of the package lattice.
+```{r}
+Sector <- factor(rep(rownames(MRC), 4),
+                 levels = sort(rownames(MRC)))
+Port <- factor(rep(colnames(MRC), each = 12),
+               levels = colnames(MRC))
+MRCdf <- data.frame(MRC = c(MRC), Port, Sector)
+dotplot(Sector ~ MRC | Port, groups = Port, data = MRCdf,
+        xlab = "Percentages",
+        main = "Marginal Risk Contributions by Security per Portfolio",
+        col = "black", pch = 19)
+```
+
+
+
+
+
+
+
+
+Per Sector
+
+
+### Portfolio - 2023 total returns ### END
+
+
+#### Equally weighted portfolio ###
+ 
+```{r}
+port<- Portfolio.Adj.all
+port$NVDA.ret <- Delt(port$NVDA.Adjusted)
+port$MSFT.ret <- Delt(port$MSFT.Adjusted)
+port$AAPL.ret <- Delt(port$AAPL.Adjusted)
+port$NFLX.ret <- Delt(port$NFLX.Adjusted)
+
+port$BRK_B.ret <- Delt(port$BRK_B.Adjusted)
+port$JPM.ret <- Delt(port$JPM.Adjusted)
+port$C.ret <- Delt(port$C.Adjusted)
+port$BLK.ret <- Delt(port$BLK.Adjusted)
+
+port$MCD.ret <- Delt(port$MCD.Adjusted)
+port$SKX.ret <- Delt(port$SKX.Adjusted)
+port$SBUX.ret <- Delt(port$SBUX.Adjusted)
+port$NKE.ret <- Delt(port$NKE.Adjusted)
+
+# port[c(1:3,nrow(port)),]
+
+
+port.df <- data.frame(Date = index(port), coredata(port))
+port.df[c(1:3,nrow(port.df)),]
+
+
+nsecurities = 12
+
+ewport <- port.df[c(1,(ncol(port.df)-(nsecurities-1)):ncol(port.df))] 
+# ewport[c(1:3,nrow(ewport)),]
+names(ewport) <-paste(c("date",
+                        "NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE"))
+
+rownames(ewport) <-seq(1:nrow(ewport))
+# ewport[c(1:3,nrow(ewport)),]
+
+## gross returns ( 1 + returns)
+
+ewport.xts <-xts(ewport[, -1], order.by = as.Date(ewport$date))
+ewport.xts <- 1+ewport.xts
+ewport <- data.frame(date = index(ewport.xts), coredata(ewport.xts))
+
+ewport[c(1:3,nrow(ewport)),]
+```
+
+
+
+```{r}
+# Infotech.Adjusted.Prices
+
+
+
+# year 1 inv / returns
+
+
+### Year 1 
+
+ew.y1<- subset(ewport,
+                ewport$date >= as.Date("2014-12-31") &
+                ewport$date <= as.Date("2015-12-31"))
+
+ew.y1[1, 2:ncol(ew.y1)] <- 1
+
+# Apply cumprod to selected columns
+columns_to_cumprod <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+
+ew.y1[columns_to_cumprod] <- cumprod(ew.y1[columns_to_cumprod])   ## Simplified previous code
+head(ew.y1)
+
+
+# Select specific rows and columns
+ew.y1[c(1:3, nrow(ew.y1)), ]
+
+num.sec = 4
+
+ew.y1$NVDA.idx <- (1/num.sec)*(ew.y1$NVDA)  ##(q1.inv/num.sec)
+ew.y1$MSFT.idx <- (1/num.sec)*(ew.y1$MSFT)
+ew.y1$AAPL.idx <- (1/num.sec)*(ew.y1$AAPL)
+ew.y1$NFLX.idx <- (1/num.sec)*(ew.y1$NFLX)
+
+ew.y1$BRK_B.idx <- (1/num.sec)*(ew.y1$BRK_B)
+ew.y1$JPM.idx <- (1/num.sec)*(ew.y1$JPM)
+ew.y1$C.idx <- (1/num.sec)*(ew.y1$C)
+ew.y1$BLK.idx <- (1/num.sec)*(ew.y1$BLK)
+
+ew.y1$MCD.idx <- (1/num.sec)*(ew.y1$MCD)
+ew.y1$SKX.idx <- (1/num.sec)*(ew.y1$SKX)
+ew.y1$SBUX.idx <- (1/num.sec)*(ew.y1$SBUX)
+ew.y1$NKE.idx <- (1/num.sec)*(ew.y1$NKE)
+
+
+ew.y1[c(1:3, nrow(ew.y1)), ]
+
+
+
+#### INFOTECH
+y1.val.infotech <- data.frame(rowSums(ew.y1[,(ncol(ew.y1)-num.sec+1-8):(ncol(ew.y1)-8)]))
+y1.val.infotech[c(1:3,nrow(y1.val.infotech)),]
+
+
+names(y1.val.infotech) <- paste("InfoTech.val")
+
+
+y1.val.infotech$date <- ew.y1$date
+y1.val.infotech[c(1:3,nrow(y1.val.infotech)),]
+y2.inv.infotech <- y1.val.infotech[nrow(y1.val.infotech),1]
+y2.inv.infotech
+
+#### FINANCIAL
+y1.val.Fin <- data.frame(rowSums(ew.y1[,(ncol(ew.y1)-num.sec+1-4):(ncol(ew.y1)-4)]))
+y1.val.Fin[c(1:3,nrow(y1.val.Fin)),]
+
+
+names(y1.val.Fin) <- paste("Financial.val")
+
+
+y1.val.Fin$date <- ew.y1$date
+y1.val.Fin[c(1:3,nrow(y1.val.Fin)),]
+y2.inv.Fin <- y1.val.Fin[nrow(y1.val.Fin),1]
+y2.inv.Fin
+
+
+#### CONSUMER
+y1.val.Cons <- data.frame(rowSums(ew.y1[,(ncol(ew.y1)-num.sec+1):(ncol(ew.y1))]))
+y1.val.Cons[c(1:3,nrow(y1.val.Cons)),]
+
+
+names(y1.val.Cons) <- paste("Consumer.val")
+
+
+y1.val.Cons$date <- ew.y1$date
+y1.val.Cons[c(1:3,nrow(y1.val.Cons)),]
+y2.inv.Cons <- y1.val.Cons[nrow(y1.val.Cons),1]
+y2.inv.Cons
+
+
+
+
+
+```
+
+```{r}
+##year 2 - 2016
+
+ew.y2 <- subset(ewport,
+                ewport$date >= as.Date("2016-01-01") &
+                ewport$date <= as.Date("2016-12-31"))
+# ew.y2[c(1:3,nrow(ew.y2)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y2[columns_to_cumprod2] <- cumprod(ew.y2[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y2$NVDA.idx <- (y2.inv.infotech/num.sec)*(ew.y2$NVDA)  ##(q1.inv/num.sec)
+ew.y2$MSFT.idx <- (y2.inv.infotech/num.sec)*(ew.y2$MSFT)
+ew.y2$AAPL.idx <- (y2.inv.infotech/num.sec)*(ew.y2$AAPL)
+ew.y2$NFLX.idx <- (y2.inv.infotech/num.sec)*(ew.y2$NFLX)
+
+ew.y2$BRK_B.idx <- (y2.inv.Fin/num.sec)*(ew.y2$BRK_B)
+ew.y2$JPM.idx <- (y2.inv.Fin/num.sec)*(ew.y2$JPM)
+ew.y2$C.idx <- (y2.inv.Fin/num.sec)*(ew.y2$C)
+ew.y2$BLK.idx <- (y2.inv.Fin/num.sec)*(ew.y2$BLK)
+
+ew.y2$MCD.idx <- (y2.inv.Cons/num.sec)*(ew.y2$MCD)
+ew.y2$SKX.idx <- (y2.inv.Cons/num.sec)*(ew.y2$SKX)
+ew.y2$SBUX.idx <- (y2.inv.Cons/num.sec)*(ew.y2$SBUX)
+ew.y2$NKE.idx <- (y2.inv.Cons/num.sec)*(ew.y2$NKE)
+
+# # ew.y2[c(1:3, nrow(ew.y2)), ]
+# 
+# y2.val <- data.frame(rowSums(ew.y2[,(ncol(ew.y2)-num.sec+1):ncol(ew.y2)]))
+# # y2.val[c(1:3,nrow(y2.val)),]
+# names(y2.val) <- paste("port.val")
+# y2.val$date <- ew.y2$date
+# y2.val[c(1:3,nrow(y2.val)),]
+# 
+# 
+# y3.inv <- y2.val[nrow(y2.val),1]
+# y3.inv
+
+
+
+
+
+
+#### INFOTECH
+y2.val.infotech <- data.frame(rowSums(ew.y2[,(ncol(ew.y2)-num.sec+1-8):(ncol(ew.y2)-8)]))
+y2.val.infotech[c(1:3,nrow(y2.val.infotech)),]
+
+
+names(y2.val.infotech) <- paste("InfoTech.val")
+
+
+y2.val.infotech$date <- ew.y2$date
+y2.val.infotech[c(1:3,nrow(y2.val.infotech)),]
+y3.inv.infotech <- y2.val.infotech[nrow(y2.val.infotech),1]
+y3.inv.infotech
+
+#### FINANCIAL
+y2.val.Fin <- data.frame(rowSums(ew.y2[,(ncol(ew.y2)-num.sec+1-4):(ncol(ew.y2)-4)]))
+y2.val.Fin[c(1:3,nrow(y2.val.Fin)),]
+
+
+names(y2.val.Fin) <- paste("Financial.val")
+
+
+y2.val.Fin$date <- ew.y2$date
+y2.val.Fin[c(1:3,nrow(y2.val.Fin)),]
+y3.inv.Fin <- y2.val.Fin[nrow(y2.val.Fin),1]
+y3.inv.Fin
+
+
+#### CONSUMER
+y2.val.Cons <- data.frame(rowSums(ew.y2[,(ncol(ew.y2)-num.sec+1):(ncol(ew.y2))]))
+y2.val.Cons[c(1:3,nrow(y2.val.Cons)),]
+
+
+names(y2.val.Cons) <- paste("Consumer.val")
+
+
+y2.val.Cons$date <- ew.y2$date
+y2.val.Cons[c(1:3,nrow(y2.val.Cons)),]
+y3.inv.Cons <- y2.val.Cons[nrow(y2.val.Cons),1]
+y3.inv.Cons
+
+
+```
+
+
+```{r}
+##year 3 - 2017
+
+ew.y3 <- subset(ewport,
+                ewport$date >= as.Date("2017-01-01") &
+                ewport$date <= as.Date("2017-12-31"))
+# ew.y3[c(1:3,nrow(ew.y3)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y3[columns_to_cumprod2] <- cumprod(ew.y3[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y3$NVDA.idx <- (y3.inv.infotech/num.sec)*(ew.y3$NVDA)  ##(q1.inv/num.sec)
+ew.y3$MSFT.idx <- (y3.inv.infotech/num.sec)*(ew.y3$MSFT)
+ew.y3$AAPL.idx <- (y3.inv.infotech/num.sec)*(ew.y3$AAPL)
+ew.y3$NFLX.idx <- (y3.inv.infotech/num.sec)*(ew.y3$NFLX)
+
+ew.y3$BRK_B.idx <- (y3.inv.Fin/num.sec)*(ew.y3$BRK_B)
+ew.y3$JPM.idx <- (y3.inv.Fin/num.sec)*(ew.y3$JPM)
+ew.y3$C.idx <- (y3.inv.Fin/num.sec)*(ew.y3$C)
+ew.y3$BLK.idx <- (y3.inv.Fin/num.sec)*(ew.y3$BLK)
+
+ew.y3$MCD.idx <- (y3.inv.Cons/num.sec)*(ew.y3$MCD)
+ew.y3$SKX.idx <- (y3.inv.Cons/num.sec)*(ew.y3$SKX)
+ew.y3$SBUX.idx <- (y3.inv.Cons/num.sec)*(ew.y3$SBUX)
+ew.y3$NKE.idx <- (y3.inv.Cons/num.sec)*(ew.y3$NKE)
+
+
+##CUMPROD
+
+#### INFOTECH
+y3.val.infotech <- data.frame(rowSums(ew.y3[,(ncol(ew.y3)-num.sec+1-8):(ncol(ew.y3)-8)]))
+y3.val.infotech[c(1:3,nrow(y3.val.infotech)),]
+
+
+names(y3.val.infotech) <- paste("InfoTech.val")
+
+
+y3.val.infotech$date <- ew.y3$date
+y3.val.infotech[c(1:3,nrow(y3.val.infotech)),]
+y4.inv.infotech <- y3.val.infotech[nrow(y3.val.infotech),1]
+y4.inv.infotech
+
+#### FINANCIAL
+y3.val.Fin <- data.frame(rowSums(ew.y3[,(ncol(ew.y3)-num.sec+1-4):(ncol(ew.y3)-4)]))
+y3.val.Fin[c(1:3,nrow(y3.val.Fin)),]
+
+
+names(y3.val.Fin) <- paste("Financial.val")
+
+
+y3.val.Fin$date <- ew.y3$date
+y3.val.Fin[c(1:3,nrow(y3.val.Fin)),]
+y4.inv.Fin <- y3.val.Fin[nrow(y3.val.Fin),1]
+y4.inv.Fin
+
+
+#### CONSUMER
+y3.val.Cons <- data.frame(rowSums(ew.y3[,(ncol(ew.y3)-num.sec+1):(ncol(ew.y3))]))
+y3.val.Cons[c(1:3,nrow(y3.val.Cons)),]
+
+
+names(y3.val.Cons) <- paste("Consumer.val")
+
+
+y3.val.Cons$date <- ew.y3$date
+y3.val.Cons[c(1:3,nrow(y3.val.Cons)),]
+y4.inv.Cons <- y3.val.Cons[nrow(y3.val.Cons),1]
+y4.inv.Cons
+
+
+```
+
+
+```{r}
+##year 4 - 2018
+
+ew.y4 <- subset(ewport,
+                ewport$date >= as.Date("2018-01-01") &
+                ewport$date <= as.Date("2018-12-31"))
+# ew.y4[c(1:3,nrow(ew.y4)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y4[columns_to_cumprod2] <- cumprod(ew.y4[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y4$NVDA.idx <- (y4.inv.infotech/num.sec)*(ew.y4$NVDA)  ##(q1.inv/num.sec)
+ew.y4$MSFT.idx <- (y4.inv.infotech/num.sec)*(ew.y4$MSFT)
+ew.y4$AAPL.idx <- (y4.inv.infotech/num.sec)*(ew.y4$AAPL)
+ew.y4$NFLX.idx <- (y4.inv.infotech/num.sec)*(ew.y4$NFLX)
+
+ew.y4$BRK_B.idx <- (y4.inv.Fin/num.sec)*(ew.y4$BRK_B)
+ew.y4$JPM.idx <- (y4.inv.Fin/num.sec)*(ew.y4$JPM)
+ew.y4$C.idx <- (y4.inv.Fin/num.sec)*(ew.y4$C)
+ew.y4$BLK.idx <- (y4.inv.Fin/num.sec)*(ew.y4$BLK)
+
+ew.y4$MCD.idx <- (y4.inv.Cons/num.sec)*(ew.y4$MCD)
+ew.y4$SKX.idx <- (y4.inv.Cons/num.sec)*(ew.y4$SKX)
+ew.y4$SBUX.idx <- (y4.inv.Cons/num.sec)*(ew.y4$SBUX)
+ew.y4$NKE.idx <- (y4.inv.Cons/num.sec)*(ew.y4$NKE)
+
+
+##CUMPROD
+
+#### INFOTECH
+y4.val.infotech <- data.frame(rowSums(ew.y4[,(ncol(ew.y4)-num.sec+1-8):(ncol(ew.y4)-8)]))
+y4.val.infotech[c(1:3,nrow(y4.val.infotech)),]
+
+
+names(y4.val.infotech) <- paste("InfoTech.val")
+
+
+y4.val.infotech$date <- ew.y4$date
+y4.val.infotech[c(1:3,nrow(y4.val.infotech)),]
+y5.inv.infotech <- y4.val.infotech[nrow(y4.val.infotech),1]
+y5.inv.infotech
+
+#### FINANCIAL
+y4.val.Fin <- data.frame(rowSums(ew.y4[,(ncol(ew.y4)-num.sec+1-4):(ncol(ew.y4)-4)]))
+y4.val.Fin[c(1:3,nrow(y4.val.Fin)),]
+
+
+names(y4.val.Fin) <- paste("Financial.val")
+
+
+y4.val.Fin$date <- ew.y4$date
+y4.val.Fin[c(1:3,nrow(y4.val.Fin)),]
+y5.inv.Fin <- y4.val.Fin[nrow(y4.val.Fin),1]
+y5.inv.Fin
+
+
+#### CONSUMER
+y4.val.Cons <- data.frame(rowSums(ew.y4[,(ncol(ew.y4)-num.sec+1):(ncol(ew.y4))]))
+y4.val.Cons[c(1:3,nrow(y4.val.Cons)),]
+
+
+names(y4.val.Cons) <- paste("Consumer.val")
+
+
+y4.val.Cons$date <- ew.y4$date
+y4.val.Cons[c(1:3,nrow(y4.val.Cons)),]
+y5.inv.Cons <- y4.val.Cons[nrow(y4.val.Cons),1]
+y5.inv.Cons
+
+
+```
+
+```{r}
+##year 5 - 2019
+
+ew.y5 <- subset(ewport,
+                ewport$date >= as.Date("2019-01-01") &
+                ewport$date <= as.Date("2019-12-31"))
+# ew.y5[c(1:3,nrow(ew.y5)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y5[columns_to_cumprod2] <- cumprod(ew.y5[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y5$NVDA.idx <- (y5.inv.infotech/num.sec)*(ew.y5$NVDA)  ##(q1.inv/num.sec)
+ew.y5$MSFT.idx <- (y5.inv.infotech/num.sec)*(ew.y5$MSFT)
+ew.y5$AAPL.idx <- (y5.inv.infotech/num.sec)*(ew.y5$AAPL)
+ew.y5$NFLX.idx <- (y5.inv.infotech/num.sec)*(ew.y5$NFLX)
+
+ew.y5$BRK_B.idx <- (y5.inv.Fin/num.sec)*(ew.y5$BRK_B)
+ew.y5$JPM.idx <- (y5.inv.Fin/num.sec)*(ew.y5$JPM)
+ew.y5$C.idx <- (y5.inv.Fin/num.sec)*(ew.y5$C)
+ew.y5$BLK.idx <- (y5.inv.Fin/num.sec)*(ew.y5$BLK)
+
+ew.y5$MCD.idx <- (y5.inv.Cons/num.sec)*(ew.y5$MCD)
+ew.y5$SKX.idx <- (y5.inv.Cons/num.sec)*(ew.y5$SKX)
+ew.y5$SBUX.idx <- (y5.inv.Cons/num.sec)*(ew.y5$SBUX)
+ew.y5$NKE.idx <- (y5.inv.Cons/num.sec)*(ew.y5$NKE)
+
+
+##CUMPROD
+
+#### INFOTECH
+y5.val.infotech <- data.frame(rowSums(ew.y5[,(ncol(ew.y5)-num.sec+1-8):(ncol(ew.y5)-8)]))
+y5.val.infotech[c(1:3,nrow(y5.val.infotech)),]
+
+
+names(y5.val.infotech) <- paste("InfoTech.val")
+
+
+y5.val.infotech$date <- ew.y5$date
+y5.val.infotech[c(1:3,nrow(y5.val.infotech)),]
+y6.inv.infotech <- y5.val.infotech[nrow(y5.val.infotech),1]
+y6.inv.infotech
+
+#### FINANCIAL
+y5.val.Fin <- data.frame(rowSums(ew.y5[,(ncol(ew.y5)-num.sec+1-4):(ncol(ew.y5)-4)]))
+y5.val.Fin[c(1:3,nrow(y5.val.Fin)),]
+
+
+names(y5.val.Fin) <- paste("Financial.val")
+
+
+y5.val.Fin$date <- ew.y5$date
+y5.val.Fin[c(1:3,nrow(y5.val.Fin)),]
+y6.inv.Fin <- y5.val.Fin[nrow(y5.val.Fin),1]
+y6.inv.Fin
+
+
+#### CONSUMER
+y5.val.Cons <- data.frame(rowSums(ew.y5[,(ncol(ew.y5)-num.sec+1):(ncol(ew.y5))]))
+y5.val.Cons[c(1:3,nrow(y5.val.Cons)),]
+
+
+names(y5.val.Cons) <- paste("Consumer.val")
+
+
+y5.val.Cons$date <- ew.y5$date
+y5.val.Cons[c(1:3,nrow(y5.val.Cons)),]
+y6.inv.Cons <- y5.val.Cons[nrow(y5.val.Cons),1]
+y6.inv.Cons
+
+
+```
+```{r}
+##year 6 - 2020
+
+ew.y6 <- subset(ewport,
+                ewport$date >= as.Date("2020-01-01") &
+                ewport$date <= as.Date("2020-12-31"))
+# ew.y6[c(1:3,nrow(ew.y6)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y6[columns_to_cumprod2] <- cumprod(ew.y6[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y6$NVDA.idx <- (y6.inv.infotech/num.sec)*(ew.y6$NVDA)  ##(q1.inv/num.sec)
+ew.y6$MSFT.idx <- (y6.inv.infotech/num.sec)*(ew.y6$MSFT)
+ew.y6$AAPL.idx <- (y6.inv.infotech/num.sec)*(ew.y6$AAPL)
+ew.y6$NFLX.idx <- (y6.inv.infotech/num.sec)*(ew.y6$NFLX)
+
+ew.y6$BRK_B.idx <- (y6.inv.Fin/num.sec)*(ew.y6$BRK_B)
+ew.y6$JPM.idx <- (y6.inv.Fin/num.sec)*(ew.y6$JPM)
+ew.y6$C.idx <- (y6.inv.Fin/num.sec)*(ew.y6$C)
+ew.y6$BLK.idx <- (y6.inv.Fin/num.sec)*(ew.y6$BLK)
+
+ew.y6$MCD.idx <- (y6.inv.Cons/num.sec)*(ew.y6$MCD)
+ew.y6$SKX.idx <- (y6.inv.Cons/num.sec)*(ew.y6$SKX)
+ew.y6$SBUX.idx <- (y6.inv.Cons/num.sec)*(ew.y6$SBUX)
+ew.y6$NKE.idx <- (y6.inv.Cons/num.sec)*(ew.y6$NKE)
+
+
+##CUMPROD
+
+#### INFOTECH
+y6.val.infotech <- data.frame(rowSums(ew.y6[,(ncol(ew.y6)-num.sec+1-8):(ncol(ew.y6)-8)]))
+y6.val.infotech[c(1:3,nrow(y6.val.infotech)),]
+
+
+names(y6.val.infotech) <- paste("InfoTech.val")
+
+
+y6.val.infotech$date <- ew.y6$date
+y6.val.infotech[c(1:3,nrow(y6.val.infotech)),]
+y7.inv.infotech <- y6.val.infotech[nrow(y6.val.infotech),1]
+y7.inv.infotech
+
+#### FINANCIAL
+y6.val.Fin <- data.frame(rowSums(ew.y6[,(ncol(ew.y6)-num.sec+1-4):(ncol(ew.y6)-4)]))
+y6.val.Fin[c(1:3,nrow(y6.val.Fin)),]
+
+
+names(y6.val.Fin) <- paste("Financial.val")
+
+
+y6.val.Fin$date <- ew.y6$date
+y6.val.Fin[c(1:3,nrow(y6.val.Fin)),]
+y7.inv.Fin <- y6.val.Fin[nrow(y6.val.Fin),1]
+y7.inv.Fin
+
+
+#### CONSUMER
+y6.val.Cons <- data.frame(rowSums(ew.y6[,(ncol(ew.y6)-num.sec+1):(ncol(ew.y6))]))
+y6.val.Cons[c(1:3,nrow(y6.val.Cons)),]
+
+
+names(y6.val.Cons) <- paste("Consumer.val")
+
+
+y6.val.Cons$date <- ew.y6$date
+y6.val.Cons[c(1:3,nrow(y6.val.Cons)),]
+y7.inv.Cons <- y6.val.Cons[nrow(y6.val.Cons),1]
+y7.inv.Cons
+
+
+```
+```{r}
+##year 7 - 2021
+
+ew.y7 <- subset(ewport,
+                ewport$date >= as.Date("2021-01-01") &
+                ewport$date <= as.Date("2021-12-31"))
+# ew.y7[c(1:3,nrow(ew.y7)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y7[columns_to_cumprod2] <- cumprod(ew.y7[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y7$NVDA.idx <- (y7.inv.infotech/num.sec)*(ew.y7$NVDA)  ##(q1.inv/num.sec)
+ew.y7$MSFT.idx <- (y7.inv.infotech/num.sec)*(ew.y7$MSFT)
+ew.y7$AAPL.idx <- (y7.inv.infotech/num.sec)*(ew.y7$AAPL)
+ew.y7$NFLX.idx <- (y7.inv.infotech/num.sec)*(ew.y7$NFLX)
+
+ew.y7$BRK_B.idx <- (y7.inv.Fin/num.sec)*(ew.y7$BRK_B)
+ew.y7$JPM.idx <- (y7.inv.Fin/num.sec)*(ew.y7$JPM)
+ew.y7$C.idx <- (y7.inv.Fin/num.sec)*(ew.y7$C)
+ew.y7$BLK.idx <- (y7.inv.Fin/num.sec)*(ew.y7$BLK)
+
+ew.y7$MCD.idx <- (y7.inv.Cons/num.sec)*(ew.y7$MCD)
+ew.y7$SKX.idx <- (y7.inv.Cons/num.sec)*(ew.y7$SKX)
+ew.y7$SBUX.idx <- (y7.inv.Cons/num.sec)*(ew.y7$SBUX)
+ew.y7$NKE.idx <- (y7.inv.Cons/num.sec)*(ew.y7$NKE)
+
+
+##CUMPROD
+
+#### INFOTECH
+y7.val.infotech <- data.frame(rowSums(ew.y7[,(ncol(ew.y7)-num.sec+1-8):(ncol(ew.y7)-8)]))
+y7.val.infotech[c(1:3,nrow(y7.val.infotech)),]
+
+
+names(y7.val.infotech) <- paste("InfoTech.val")
+
+
+y7.val.infotech$date <- ew.y7$date
+y7.val.infotech[c(1:3,nrow(y7.val.infotech)),]
+y8.inv.infotech <- y7.val.infotech[nrow(y7.val.infotech),1]
+y8.inv.infotech
+
+#### FINANCIAL
+y7.val.Fin <- data.frame(rowSums(ew.y7[,(ncol(ew.y7)-num.sec+1-4):(ncol(ew.y7)-4)]))
+y7.val.Fin[c(1:3,nrow(y7.val.Fin)),]
+
+
+names(y7.val.Fin) <- paste("Financial.val")
+
+
+y7.val.Fin$date <- ew.y7$date
+y7.val.Fin[c(1:3,nrow(y7.val.Fin)),]
+y8.inv.Fin <- y7.val.Fin[nrow(y7.val.Fin),1]
+y8.inv.Fin
+
+
+#### CONSUMER
+y7.val.Cons <- data.frame(rowSums(ew.y7[,(ncol(ew.y7)-num.sec+1):(ncol(ew.y7))]))
+y7.val.Cons[c(1:3,nrow(y7.val.Cons)),]
+
+
+names(y7.val.Cons) <- paste("Consumer.val")
+
+
+y7.val.Cons$date <- ew.y7$date
+y7.val.Cons[c(1:3,nrow(y7.val.Cons)),]
+y8.inv.Cons <- y7.val.Cons[nrow(y7.val.Cons),1]
+y8.inv.Cons
+
+
+```
+
+```{r}
+##year 8 - 2022
+
+ew.y8 <- subset(ewport,
+                ewport$date >= as.Date("2022-01-01") &
+                ewport$date <= as.Date("2022-12-31"))
+# ew.y8[c(1:3,nrow(ew.y8)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y8[columns_to_cumprod2] <- cumprod(ew.y8[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y8$NVDA.idx <- (y8.inv.infotech/num.sec)*(ew.y8$NVDA)  ##(q1.inv/num.sec)
+ew.y8$MSFT.idx <- (y8.inv.infotech/num.sec)*(ew.y8$MSFT)
+ew.y8$AAPL.idx <- (y8.inv.infotech/num.sec)*(ew.y8$AAPL)
+ew.y8$NFLX.idx <- (y8.inv.infotech/num.sec)*(ew.y8$NFLX)
+
+ew.y8$BRK_B.idx <- (y8.inv.Fin/num.sec)*(ew.y8$BRK_B)
+ew.y8$JPM.idx <- (y8.inv.Fin/num.sec)*(ew.y8$JPM)
+ew.y8$C.idx <- (y8.inv.Fin/num.sec)*(ew.y8$C)
+ew.y8$BLK.idx <- (y8.inv.Fin/num.sec)*(ew.y8$BLK)
+
+ew.y8$MCD.idx <- (y8.inv.Cons/num.sec)*(ew.y8$MCD)
+ew.y8$SKX.idx <- (y8.inv.Cons/num.sec)*(ew.y8$SKX)
+ew.y8$SBUX.idx <- (y8.inv.Cons/num.sec)*(ew.y8$SBUX)
+ew.y8$NKE.idx <- (y8.inv.Cons/num.sec)*(ew.y8$NKE)
+
+
+##CUMPROD
+
+#### INFOTECH
+y8.val.infotech <- data.frame(rowSums(ew.y8[,(ncol(ew.y8)-num.sec+1-8):(ncol(ew.y8)-8)]))
+y8.val.infotech[c(1:3,nrow(y8.val.infotech)),]
+
+
+names(y8.val.infotech) <- paste("InfoTech.val")
+
+
+y8.val.infotech$date <- ew.y8$date
+y8.val.infotech[c(1:3,nrow(y8.val.infotech)),]
+y9.inv.infotech <- y8.val.infotech[nrow(y8.val.infotech),1]
+y9.inv.infotech
+
+#### FINANCIAL
+y8.val.Fin <- data.frame(rowSums(ew.y8[,(ncol(ew.y8)-num.sec+1-4):(ncol(ew.y8)-4)]))
+y8.val.Fin[c(1:3,nrow(y8.val.Fin)),]
+
+
+names(y8.val.Fin) <- paste("Financial.val")
+
+
+y8.val.Fin$date <- ew.y8$date
+y8.val.Fin[c(1:3,nrow(y8.val.Fin)),]
+y9.inv.Fin <- y8.val.Fin[nrow(y8.val.Fin),1]
+y9.inv.Fin
+
+
+#### CONSUMER
+y8.val.Cons <- data.frame(rowSums(ew.y8[,(ncol(ew.y8)-num.sec+1):(ncol(ew.y8))]))
+y8.val.Cons[c(1:3,nrow(y8.val.Cons)),]
+
+
+names(y8.val.Cons) <- paste("Consumer.val")
+
+
+y8.val.Cons$date <- ew.y8$date
+y8.val.Cons[c(1:3,nrow(y8.val.Cons)),]
+y9.inv.Cons <- y8.val.Cons[nrow(y8.val.Cons),1]
+y9.inv.Cons
+
+
+```
+```{r}
+##year 8 - 2023
+
+ew.y9 <- subset(ewport,
+                ewport$date >= as.Date("2023-01-01") &
+                ewport$date <= as.Date("2023-12-31"))
+# ew.y9[c(1:3,nrow(ew.y9)),]
+
+columns_to_cumprod2 <- c("NVDA", "MSFT", "AAPL", "NFLX",
+                        "BRK_B",  "JPM", "C",  "BLK",
+                        "MCD",  "SKX", "SBUX",  "NKE")
+ew.y9[columns_to_cumprod2] <- cumprod(ew.y9[columns_to_cumprod2])   ## Simplified previous code
+
+# Select specific rows and columns
+
+ew.y9$NVDA.idx <- (y9.inv.infotech/num.sec)*(ew.y9$NVDA)  ##(q1.inv/num.sec)
+ew.y9$MSFT.idx <- (y9.inv.infotech/num.sec)*(ew.y9$MSFT)
+ew.y9$AAPL.idx <- (y9.inv.infotech/num.sec)*(ew.y9$AAPL)
+ew.y9$NFLX.idx <- (y9.inv.infotech/num.sec)*(ew.y9$NFLX)
+
+ew.y9$BRK_B.idx <- (y9.inv.Fin/num.sec)*(ew.y9$BRK_B)
+ew.y9$JPM.idx <- (y9.inv.Fin/num.sec)*(ew.y9$JPM)
+ew.y9$C.idx <- (y9.inv.Fin/num.sec)*(ew.y9$C)
+ew.y9$BLK.idx <- (y9.inv.Fin/num.sec)*(ew.y9$BLK)
+
+ew.y9$MCD.idx <- (y9.inv.Cons/num.sec)*(ew.y9$MCD)
+ew.y9$SKX.idx <- (y9.inv.Cons/num.sec)*(ew.y9$SKX)
+ew.y9$SBUX.idx <- (y9.inv.Cons/num.sec)*(ew.y9$SBUX)
+ew.y9$NKE.idx <- (y9.inv.Cons/num.sec)*(ew.y9$NKE)
+
+
+##CUMPROD
+
+#### INFOTECH
+y9.val.infotech <- data.frame(rowSums(ew.y9[,(ncol(ew.y9)-num.sec+1-8):(ncol(ew.y9)-8)]))
+y9.val.infotech[c(1:3,nrow(y9.val.infotech)),]
+
+
+names(y9.val.infotech) <- paste("InfoTech.val")
+
+
+y9.val.infotech$date <- ew.y9$date
+y9.val.infotech[c(1:3,nrow(y9.val.infotech)),]
+y10.inv.infotech <- y9.val.infotech[nrow(y9.val.infotech),1]
+y10.inv.infotech
+
+#### FINANCIAL
+y9.val.Fin <- data.frame(rowSums(ew.y9[,(ncol(ew.y9)-num.sec+1-4):(ncol(ew.y9)-4)]))
+y9.val.Fin[c(1:3,nrow(y9.val.Fin)),]
+
+
+names(y9.val.Fin) <- paste("Financial.val")
+
+
+y9.val.Fin$date <- ew.y9$date
+y9.val.Fin[c(1:3,nrow(y9.val.Fin)),]
+y10.inv.Fin <- y9.val.Fin[nrow(y9.val.Fin),1]
+y10.inv.Fin
+
+
+#### CONSUMER
+y9.val.Cons <- data.frame(rowSums(ew.y9[,(ncol(ew.y9)-num.sec+1):(ncol(ew.y9))]))
+y9.val.Cons[c(1:3,nrow(y9.val.Cons)),]
+
+
+names(y9.val.Cons) <- paste("Consumer.val")
+
+
+y9.val.Cons$date <- ew.y9$date
+y9.val.Cons[c(1:3,nrow(y9.val.Cons)),]
+y10.inv.Cons <- y9.val.Cons[nrow(y9.val.Cons),1]
+y10.inv.Cons
+
+
+```
+
+```{r}
+ew.portval.infotech <- rbind(y1.val.infotech,y2.val.infotech,y3.val.infotech,y4.val.infotech,y5.val.infotech,y6.val.infotech,y7.val.infotech,y8.val.infotech,y9.val.infotech)
+ew.portval.infotech[c(1:3,nrow(ew.portval.infotech)),]
+
+ew.portval.Fin <- rbind(y1.val.Fin,y2.val.Fin,y3.val.Fin,y4.val.Fin,y5.val.Fin,y6.val.Fin,y7.val.Fin,y8.val.Fin,y9.val.Fin)
+ew.portval.Fin[c(1:3,nrow(ew.portval.Fin)),]
+
+ew.portval.Cons <- rbind(y1.val.Cons,y2.val.Cons,y3.val.Cons,y4.val.Cons,y5.val.Cons,y6.val.Cons,y7.val.Cons,y8.val.Cons,y9.val.Cons)
+ew.portval.Cons[c(1:3,nrow(ew.portval.Cons)),]
+
+
+
+ew.portval<-cbind(ew.portval.infotech$InfoTech.val,ew.portval.Fin$Financial.val,ew.portval.Cons)
+names(ew.portval) <- paste(c("InfoTech.val","Financial.val","Consumer.val","date"))
+
+ew.portval[c(1:3,nrow(ew.portval)),]
+```
+
+
+```{r}
+## Find the index of the "date" column
+date_col_index <- which(colnames(ew.portval) == "date")
+
+# Rearrange columns to bring "date" to the first position
+ew.portval <- ew.portval[, c(date_col_index, setdiff(1:ncol(ew.portval), date_col_index))]
+
+# Print the first few rows to verify the result
+ew.portval[c(1:3,nrow(ew.portval)),]
+```
+
+
+Saving benchmark portfolio returns into a CSV file
+
+# port2.xts <-xts(ew.portval[,2:4],order.by=ew.portval[,1])
+# 
+# port2.xts$Lag.InfoTech <- Lag(port2.xts$InfoTech.val,k=1)
+# port2.xts$Lag.Financial <- Lag(port2.xts$Financial.val,k=1)
+# port2.xts$Lag.Consumer <- Lag(port2.xts$Consumer.val,k=1)
+# 
+# # # port2.xts$Lag.EW <- Lag(port2.xts$EW.cum,k=1)
+# # 
+# # port.xts$VW.ret <- port.xts$VW.cum/port.xts$Lag.VW-1
+# # port.xts$EW.ret <- port.xts$EW.cum/port.xts$Lag.EW-1
+# # 
+# Port.Ret <- port2.xts #[,c(1,2,5,6)]
+# Port.Ret[c(1:3,nrow(Port.Ret)),]
+# # 
+
+
+
+
+```{r}
+csv1.port <- cbind(data.frame(index(ew.portval)),data.frame(ew.portval))
+names(csv1.port)[1]<- paste("date")
+csv1.port[c(1:3,nrow(csv1.port)),]
+
+```
+
+
+```{r}
+rownames(csv1.port) <- seq(1:nrow(csv1.port))
+csv1.port[c(1:3,nrow(csv1.port)),]
+
+```
+
+
+```{r}
+write.csv(csv1.port,"EW Portfolio Per Sector(Daily).csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Calculate return time series 
+
+
+```{r}
+
+
+
+Idx <- interpNA(ew.portval[, -1], method = "before")
+R <- returnseries(Idx, method = "discrete", trim = TRUE)
+V <- cov(R)
+head(Idx)
+head(R)
+V
+```
+```{r}
+GMVw <- Weights(PGMV(R))
+MDPw <- Weights(PMD(R))
+MTDw <- Weights(PMTD(R))
+ERCw <- Weights(PERC(V))
+```
+The weights are then collected in the matrix object W.
+
+This object is then used in the call to the apply() function to determine the marginal risk contributions for each of the four optimal weight vectors.
+```{r}
+W <- cbind(GMVw, MDPw, MTDw, ERCw)
+MRC <- apply(W, 2, mrc, Sigma = V)
+rownames(MRC) <- colnames(Idx)
+colnames(MRC) <- c("GMV", "MDP", "MTD", "ERC")
+
+
+oldpar <- par(no.readonly = TRUE)
+par(mfrow = c(2, 2))
+dotchart(GMVw, xlim = c(0, 60), main = "GMV Allocation", pch = 19)
+dotchart(MDPw - GMVw, xlim = c(-20, 20), main = "MDP vs. GMV",
+         pch = 19)
+abline(v = 0, col = "grey")
+dotchart(MTDw - GMVw, xlim = c(-20, 20), main = "MTD vs. GMV",
+         pch = 19)
+abline(v = 0, col = "grey")
+dotchart(ERCw - GMVw, xlim = c(-20, 20), main = "ERC vs. GMV",
+         pch = 19)
+abline(v = 0, col = "grey")
+```
+```{r}
+Sector <- factor(rep(rownames(MRC), 4),
+                 levels = sort(rownames(MRC)))
+Port <- factor(rep(colnames(MRC), each = 3),
+               levels = colnames(MRC))
+MRCdf <- data.frame(MRC = c(MRC), Port, Sector)
+dotplot(Sector ~ MRC | Port, groups = Port, data = MRCdf,
+        xlab = "Percentages",
+        main = "Marginal Risk Contributions by Sector per Portfolio",
+        col = "black", pch = 19)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

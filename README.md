@@ -1,6 +1,19 @@
 # ANLY-515-Risk-Modeling-Project
 This financial risk modeling project focuses on the construction and analysis of a diversified stock portfolio composed of 4 Information Technology (IT) stocks, 4 Financials stocks, and 4 Consumer Discretionary stocks. 
 
+# Some Topis and Highlights  
+1. Suitable Distributions Forecasting <br>
+   1.1. **Autoregressive conditional heteroscedasticity** (ARCH)
+   1.2. **Value at Risk** historical VaR and simulated (gaussian and different distributions) VaR
+   1.3. **Expected shortfall** historical ES and simulated (gaussian and different distributions) ES
+2. Optimization
+   2.1. MarkowitzMean-VarianceOptimization
+        2.1.1. Minimum Variance Portfolio
+        2.1.2. Tangency Portfolio
+   2.2. DiversificationReconsideration
+        2.2.1. Marginal risk contributions per security and per sector
+
+
 # References:<br>
  [1] Lecture Notes. ANLY 515-51- A-2024/Spring- Risk Modeling and Assessment<br>
  [2] Pfaff, B. (2016). Financial Risk Modelling and Portfolio Optimization with R. https://doi.org/10.1002/9781119119692<br>
